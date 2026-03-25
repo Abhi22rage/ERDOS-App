@@ -837,7 +837,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                "🌐 ${_currentLat} , ${_currentLng}",
+                                "🌐 $_currentLat , $_currentLng",
                                 style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 9,
@@ -999,7 +999,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
       return List.generate(
           quantity,
           (i) =>
-              '${_selectedComponentType} ${(i + 1).toString().padLeft(2, '0')}');
+              '$_selectedComponentType ${(i + 1).toString().padLeft(2, '0')}');
     }
     return ['Unit 01', 'Unit 02', 'Unit 03'];
   }

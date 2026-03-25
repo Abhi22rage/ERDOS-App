@@ -195,8 +195,11 @@ class _ApprovalCard extends ConsumerWidget {
   Future<void> _handleAction(BuildContext context, WidgetRef ref, bool isApprove) async {
     final api = ref.read(apiServiceProvider);
     try {
-      if (isApprove) await api.approveBreakdown(approval['id'].toString());
-      else await api.rejectBreakdown(approval['id'].toString());
+      if (isApprove) {
+        await api.approveBreakdown(approval['id'].toString());
+      } else {
+        await api.rejectBreakdown(approval['id'].toString());
+      }
       
       ref.invalidate(pendingApprovalsProvider);
       if (context.mounted) {

@@ -130,6 +130,28 @@ class ApiService {
     await _client.auth.signOut();
   }
 
+  Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+    try {
+      if (_sessionUser != null && _sessionUser!.id == userId) {
+        _sessionUser = UserModel(
+          id: _sessionUser!.id,
+          name: data['name'] ?? _sessionUser!.name,
+          mobile: data['phone'] ?? _sessionUser!.mobile,
+          email: _sessionUser!.email,
+          role: _sessionUser!.role,
+          category: _sessionUser!.category,
+          isVerified: _sessionUser!.isVerified,
+          fcmToken: _sessionUser!.fcmToken,
+          address: data['address'] ?? _sessionUser!.address,
+          createdAt: _sessionUser!.createdAt,
+        );
+      }
+      await _client.from('users').update(data).eq('id', userId);
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+    }
+  }
+
   Future<void> updateBreakdownStatus(String id, String newStatus) async {
     try {
       // Update local mock incidents first

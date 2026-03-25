@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fluent_ui.dart';
+import '../widgets/edit_profile_modal.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -84,31 +85,52 @@ class ProfileScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Account Section ──
-                    const FluentSectionHeader(title: 'ACCOUNT INFORMATION', icon: LucideIcons.user),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const FluentSectionHeader(title: 'ACCOUNT INFORMATION', icon: LucideIcons.user),
+                        if (user != null)
+                          TextButton.icon(
+                            onPressed: () => showEditProfileModal(context, ref, user),
+                            icon: const Icon(LucideIcons.edit2, size: 14),
+                            label: const Text('EDIT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     FluentCard(
                       padding: EdgeInsets.zero,
                       child: Column(
                         children: [
                           _settingsTile(
-                            icon: LucideIcons.phone,
-                            title: 'Mobile Number',
-                            value: user?.mobile ?? '—',
+                            icon: LucideIcons.user,
+                            title: 'Full Name',
+                            value: user?.name ?? 'Not provided',
                             color: Colors.blue,
                             isDarkMode: isDarkMode,
                           ),
                           _settingsTile(
-                            icon: LucideIcons.mail,
-                            title: 'Email Address',
-                            value: user?.email ?? 'Not provided',
-                            color: Colors.orange,
+                            icon: LucideIcons.phone,
+                            title: 'Mobile Number',
+                            value: user?.mobile ?? '—',
+                            color: Colors.green,
                             isDarkMode: isDarkMode,
                           ),
                           _settingsTile(
-                            icon: LucideIcons.shieldCheck,
-                            title: 'Identity Verification',
-                            value: user?.isVerified == true ? 'Verified' : 'Pending',
-                            color: user?.isVerified == true ? Colors.green : Colors.amber,
+                            icon: LucideIcons.mapPin,
+                            title: 'Proper Address',
+                            value: (user?.address != null && user!.address!.isNotEmpty)
+                                ? user.address!
+                                : 'Not provided',
+                            color: Colors.orange,
                             isLast: true,
                             isDarkMode: isDarkMode,
                           ),

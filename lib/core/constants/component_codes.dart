@@ -117,6 +117,6 @@ class ComponentCodes {
     // Use part of timestamp for uniqueness
     String ts = DateTime.now().millisecondsSinceEpoch.toString().substring(10);
     
-    return '${s}-${c}-${u}-${ts}';
+    return '$s-$c-$u-$ts';
   }
 }

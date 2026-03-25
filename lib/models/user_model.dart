@@ -7,6 +7,7 @@ class UserModel {
   final String? category;
   final bool isVerified;
   final String? fcmToken;
+  final String? address;
   final DateTime? createdAt;
 
   UserModel({
@@ -18,6 +19,7 @@ class UserModel {
     this.category,
     this.isVerified = false,
     this.fcmToken,
+    this.address,
     this.createdAt,
   });
 
@@ -31,6 +33,7 @@ class UserModel {
       category: json['category'],
       isVerified: json['is_verified'] ?? false,
       fcmToken: json['fcm_token'],
+      address: json['address'],
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
@@ -45,6 +48,7 @@ class UserModel {
         'role': role,
         'category': category,
         'is_verified': isVerified,
+        'address': address,
       };
 
   String get displayName => name ?? 'User';

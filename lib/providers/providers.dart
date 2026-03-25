@@ -76,6 +76,14 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     await ref.read(apiServiceProvider).logout();
     state = const AsyncValue.data(null);
   }
+
+  Future<void> updateProfile(Map<String, dynamic> data) async {
+    final user = state.value;
+    if (user != null) {
+      await ref.read(apiServiceProvider).updateUserProfile(user.id, data);
+      state = AsyncValue.data(await ref.read(apiServiceProvider).getCurrentUser());
+    }
+  }
 }
 
 final authProvider = AsyncNotifierProvider<AuthNotifier, UserModel?>(

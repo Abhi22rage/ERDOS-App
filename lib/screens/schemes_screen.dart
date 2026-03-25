@@ -58,8 +58,9 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
       final Set<String> uniqueNames = {};
       for (var comp in groupedWtpComponents[_selectedCategory]!) {
         bool matchesLoc = true;
-        if (_selectedAsset == 'Intake (Barge)' && !comp.locationUsage.toLowerCase().contains('barge')) matchesLoc = false;
-        else if (_selectedAsset == 'Water Treatment Plant' && !comp.locationUsage.toLowerCase().contains('treatment plant')) matchesLoc = false;
+        if (_selectedAsset == 'Intake (Barge)' && !comp.locationUsage.toLowerCase().contains('barge')) {
+          matchesLoc = false;
+        } else if (_selectedAsset == 'Water Treatment Plant' && !comp.locationUsage.toLowerCase().contains('treatment plant')) matchesLoc = false;
         if (matchesLoc || comp.locationUsage.isEmpty) {
           uniqueNames.add(comp.name);
         }
@@ -80,7 +81,7 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
       final comp = matches.first;
       int quantity = int.tryParse(comp.quantity) ?? 0;
       if (quantity <= 1) return [];
-      return List.generate(quantity, (i) => '${_selectedType} ${(i + 1).toString().padLeft(2, '0')}');
+      return List.generate(quantity, (i) => '$_selectedType ${(i + 1).toString().padLeft(2, '0')}');
     }
     return ['Unit 01', 'Unit 02', 'Unit 03'];
   }

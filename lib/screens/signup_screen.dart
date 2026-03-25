@@ -457,7 +457,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     : Colors.transparent),
           ),
           child: DropdownButtonFormField<String>(
-            value: _selectedRole,
+            initialValue: _selectedRole,
             dropdownColor: isDarkMode ? const Color(0xFF1A1F26) : Colors.white,
             style: TextStyle(
               fontSize: 14,
