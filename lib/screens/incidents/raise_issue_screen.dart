@@ -8,11 +8,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../core/constants/component_codes.dart';
-import '../providers/providers.dart';
-import '../theme/app_theme.dart';
-import '../core/constants/dispur_wss_components.dart';
-import '../widgets/fluent_ui.dart';
+import '../../core/constants/component_codes.dart';
+import '../../providers/providers.dart';
+import '../../theme/app_theme.dart';
+import '../../core/constants/dispur_wss_components.dart';
+import '../../widgets/fluent_ui.dart';
 
 class RaiseIssueScreen extends ConsumerStatefulWidget {
   const RaiseIssueScreen({super.key});

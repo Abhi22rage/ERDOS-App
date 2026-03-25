@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../providers/providers.dart';
-import '../models/breakdown_model.dart';
-import '../theme/app_theme.dart';
-import '../widgets/fluent_ui.dart';
-import '../widgets/gps_image_overlay.dart';
+import '../../providers/providers.dart';
+import '../../models/breakdown_model.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/fluent_ui.dart';
+import '../../widgets/gps_image_overlay.dart';
 
 const _progressSteps = [
   {'key': 'reported', 'label': 'Reported', 'icon': LucideIcons.fileText, 'desc': 'Incident submitted'},

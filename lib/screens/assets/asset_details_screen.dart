@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../theme/app_theme.dart';
-import '../widgets/fluent_ui.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/fluent_ui.dart';
 
 class AssetDetailsScreen extends StatelessWidget {
   final String id;

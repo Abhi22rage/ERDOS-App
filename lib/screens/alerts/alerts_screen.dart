@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../providers/providers.dart';
-import '../theme/app_theme.dart';
-import '../widgets/fluent_ui.dart';
+import '../../providers/providers.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/fluent_ui.dart';
 
 class AlertsScreen extends ConsumerWidget {
   const AlertsScreen({super.key});

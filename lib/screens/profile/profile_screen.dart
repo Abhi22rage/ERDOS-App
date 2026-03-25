@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../providers/providers.dart';
-import '../theme/app_theme.dart';
-import '../widgets/fluent_ui.dart';
-import '../widgets/edit_profile_modal.dart';
+import '../../providers/providers.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/fluent_ui.dart';
+import '../../widgets/edit_profile_modal.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});

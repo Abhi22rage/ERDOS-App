@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../theme/app_theme.dart';
-import '../widgets/fluent_ui.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/fluent_ui.dart';
 
 class ContractorsScreen extends ConsumerWidget {
   const ContractorsScreen({super.key});
