@@ -12,6 +12,7 @@ void showEditProfileModal(BuildContext context, WidgetRef ref, UserModel user) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     builder: (context) => _EditProfileSheet(user: user),
   );
@@ -29,7 +30,13 @@ class _EditProfileSheet extends ConsumerStatefulWidget {
 class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   late TextEditingController _nameController;
   late TextEditingController _mobileController;
-  late TextEditingController _addressController;
+  late TextEditingController _addressLineController;
+  late TextEditingController _areaLocalityController;
+  late TextEditingController _cityController;
+  late TextEditingController _stateController;
+  late TextEditingController _districtController;
+  late TextEditingController _countryController;
+  late TextEditingController _postalCodeController;
 
   bool _isLoading = false;
 
@@ -38,14 +45,26 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     super.initState();
     _nameController = TextEditingController(text: widget.user.name ?? '');
     _mobileController = TextEditingController(text: widget.user.mobile);
-    _addressController = TextEditingController(text: widget.user.address ?? '');
+    _addressLineController = TextEditingController(text: widget.user.addressLine ?? '');
+    _areaLocalityController = TextEditingController(text: widget.user.areaLocality ?? '');
+    _cityController = TextEditingController(text: widget.user.city ?? '');
+    _stateController = TextEditingController(text: widget.user.state ?? '');
+    _districtController = TextEditingController(text: widget.user.district ?? '');
+    _countryController = TextEditingController(text: widget.user.country ?? '');
+    _postalCodeController = TextEditingController(text: widget.user.postalCode?.toString() ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _mobileController.dispose();
-    _addressController.dispose();
+    _addressLineController.dispose();
+    _areaLocalityController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _districtController.dispose();
+    _countryController.dispose();
+    _postalCodeController.dispose();
     super.dispose();
   }
 
@@ -58,7 +77,13 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       final updatedData = {
         'name': _nameController.text.trim(),
         'phone': _mobileController.text.trim(),
-        'address': _addressController.text.trim(),
+        'address_line': _addressLineController.text.trim(),
+        'area_locality': _areaLocalityController.text.trim(),
+        'city': _cityController.text.trim(),
+        'state': _stateController.text.trim(),
+        'district': _districtController.text.trim(),
+        'country': _countryController.text.trim(),
+        'postal_code': int.tryParse(_postalCodeController.text.trim()),
       };
 
       await ref.read(authProvider.notifier).updateProfile(updatedData);
@@ -89,12 +114,15 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return BackdropFilter(
       filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
-        margin: const EdgeInsets.all(16).copyWith(bottom: bottomInset + 16),
+        margin: const EdgeInsets.all(16).copyWith(
+          bottom: bottomInset > 0 ? bottomInset + 16 : bottomPadding + 16,
+        ),
         decoration: BoxDecoration(
           color: isDarkMode 
               ? const Color(0xFF1E1E2E).withValues(alpha: 0.9) 
@@ -149,6 +177,16 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                       ),
                     ),
                   ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(
+                      LucideIcons.x,
+                      color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                    ),
+                    splashRadius: 24,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -170,10 +208,69 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _addressController,
-                label: 'Proper Address',
+                controller: _addressLineController,
+                label: 'Address Line',
                 icon: LucideIcons.mapPin,
                 maxLines: 2,
+                isDarkMode: isDarkMode,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _areaLocalityController,
+                label: 'Area/Locality',
+                icon: LucideIcons.map,
+                isDarkMode: isDarkMode,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _cityController,
+                      label: 'City',
+                      icon: LucideIcons.building,
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _districtController,
+                      label: 'District',
+                      icon: LucideIcons.map,
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _stateController,
+                      label: 'State',
+                      icon: LucideIcons.mapPin,
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _countryController,
+                      label: 'Country',
+                      icon: LucideIcons.globe,
+                      isDarkMode: isDarkMode,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _postalCodeController,
+                label: 'Postal Code',
+                icon: LucideIcons.hash,
+                keyboardType: TextInputType.number,
                 isDarkMode: isDarkMode,
               ),
               const SizedBox(height: 32),

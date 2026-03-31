@@ -151,7 +151,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 color: Colors.green),
                           ],
                         ),
-                        loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+                        loading: () => const SizedBox(
+                            height: 80,
+                            child: Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))),
                         error: (e, _) => SizedBox(
                           height: 80,
                           child: Center(
@@ -159,7 +163,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               'Stats currently unavailable',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: isDarkMode ? Colors.white24 : AppColors.textSecondary,
+                                color: isDarkMode
+                                    ? Colors.white24
+                                    : AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

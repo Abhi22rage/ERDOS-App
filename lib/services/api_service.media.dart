@@ -21,4 +21,21 @@ mixin _MediaMixin {
       return 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=800';
     }
   }
+
+  Future<String> uploadProfilePhoto(String userId, Uint8List bytes) async {
+    final path = '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    
+    await _client.storage.from('img_profiles').uploadBinary(
+      path, 
+      bytes,
+      fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+    );
+    
+    return _client.storage.from('img_profiles').getPublicUrl(path);
+  }
+
+  Future<void> removeProfilePhoto(String userId) async {
+    // In a real app, you might want to delete all files in the userId folder, 
+    // but for now, we leave them in the bucket and rely on the new photo overwriting logic.
+  }
 }

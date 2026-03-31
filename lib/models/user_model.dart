@@ -8,7 +8,15 @@ class UserModel {
   final bool isVerified;
   final String? fcmToken;
   final String? address;
+  final String? addressLine;
+  final String? areaLocality;
+  final String? city;
+  final String? state;
+  final String? district;
+  final String? country;
+  final int? postalCode;
   final DateTime? createdAt;
+  final String? photoUrl;
 
   UserModel({
     required this.id,
@@ -20,7 +28,15 @@ class UserModel {
     this.isVerified = false,
     this.fcmToken,
     this.address,
+    this.addressLine,
+    this.areaLocality,
+    this.city,
+    this.state,
+    this.district,
+    this.country,
+    this.postalCode,
     this.createdAt,
+    this.photoUrl,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -34,9 +50,17 @@ class UserModel {
       isVerified: json['is_verified'] ?? false,
       fcmToken: json['fcm_token'],
       address: json['address'],
+      addressLine: json['address_line'],
+      areaLocality: json['area_locality'],
+      city: json['city'],
+      state: json['state'],
+      district: json['district'],
+      country: json['country'],
+      postalCode: json['postal_code'] is int ? json['postal_code'] : int.tryParse(json['postal_code']?.toString() ?? ''),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
+      photoUrl: json['photo_url'],
     );
   }
 
@@ -49,6 +73,13 @@ class UserModel {
         'category': category,
         'is_verified': isVerified,
         'address': address,
+        'address_line': addressLine,
+        'area_locality': areaLocality,
+        'city': city,
+        'state': state,
+        'district': district,
+        'country': country,
+        'postal_code': postalCode,
       };
 
   String get displayName => name ?? 'User';

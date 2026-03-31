@@ -120,6 +120,13 @@ mixin _AuthMixin {
           isVerified: ApiService.sessionUser!.isVerified,
           fcmToken: ApiService.sessionUser!.fcmToken,
           address: data['address'] ?? ApiService.sessionUser!.address,
+          addressLine: data['address_line'] ?? ApiService.sessionUser!.addressLine,
+          areaLocality: data['area_locality'] ?? ApiService.sessionUser!.areaLocality,
+          city: data['city'] ?? ApiService.sessionUser!.city,
+          state: data['state'] ?? ApiService.sessionUser!.state,
+          district: data['district'] ?? ApiService.sessionUser!.district,
+          country: data['country'] ?? ApiService.sessionUser!.country,
+          postalCode: data['postal_code'] ?? ApiService.sessionUser!.postalCode,
           createdAt: ApiService.sessionUser!.createdAt,
         );
       }

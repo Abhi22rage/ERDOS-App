@@ -19,14 +19,23 @@ import '../screens/reports/reports_screen.dart';
 import '../screens/alerts/alerts_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/reports/certificate_report_screen.dart';
+import '../models/user_model.dart';
 import 'auth_provider.dart';
 
 // ─── Router Provider ──────────────────────────────────────────────────────────
 final routerProvider = Provider<GoRouter>((ref) {
+  // Notify GoRouter when auth state changes without recreating the entire router
+  final refreshNotifier = ValueNotifier<AsyncValue<UserModel?>>(const AsyncLoading());
+  
+  ref.listen(authProvider, (previous, next) {
+    refreshNotifier.value = next;
+  });
+
   return GoRouter(
     initialLocation: '/home',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      final authState = ref.watch(authProvider);
+      final authState = ref.read(authProvider);
       final bool loggingIn =
           state.uri.path == '/login' || state.uri.path == '/signup';
 

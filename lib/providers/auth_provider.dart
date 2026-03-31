@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/user_model.dart';
@@ -42,6 +43,32 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     if (user != null) {
       await ref.read(apiServiceProvider).updateUserProfile(user.id, data);
       state = AsyncValue.data(await ref.read(apiServiceProvider).getCurrentUser());
+    }
+  }
+
+  Future<void> uploadProfilePhoto(Uint8List bytes) async {
+    final user = state.value;
+    if (user == null) return;
+    
+    state = const AsyncValue.loading();
+    try {
+      final url = await ref.read(apiServiceProvider).uploadProfilePhoto(user.id, bytes);
+      await updateProfile({'photo_url': url});
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> removeProfilePhoto() async {
+    final user = state.value;
+    if (user == null) return;
+
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(apiServiceProvider).removeProfilePhoto(user.id);
+      await updateProfile({'photo_url': null});
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 }

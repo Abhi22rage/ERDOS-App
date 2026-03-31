@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/fluent_ui.dart';
 import '../../widgets/edit_profile_modal.dart';
+import '../../widgets/success_popup.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -57,7 +60,7 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         const SizedBox(height: 60),
                         // Avatar with ring
-                        _buildAvatar(user, isDarkMode),
+                        _buildAvatar(context, ref, user, isDarkMode),
                         const SizedBox(height: 16),
                         Text(
                           user?.displayName ?? 'Loading Profile...',
@@ -88,19 +91,29 @@ class ProfileScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const FluentSectionHeader(title: 'ACCOUNT INFORMATION', icon: LucideIcons.user),
+                        const FluentSectionHeader(
+                            title: 'ACCOUNT INFORMATION',
+                            icon: LucideIcons.user),
                         if (user != null)
                           TextButton.icon(
-                            onPressed: () => showEditProfileModal(context, ref, user),
+                            onPressed: () =>
+                                showEditProfileModal(context, ref, user),
                             icon: const Icon(LucideIcons.edit2, size: 14),
-                            label: const Text('EDIT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                            label: const Text('EDIT',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.5)),
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              backgroundColor:
+                                  AppColors.primary.withValues(alpha: 0.1),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
                             ),
                           ),
                       ],
@@ -124,15 +137,37 @@ class ProfileScreen extends ConsumerWidget {
                             color: Colors.green,
                             isDarkMode: isDarkMode,
                           ),
-                          _settingsTile(
-                            icon: LucideIcons.mapPin,
-                            title: 'Proper Address',
-                            value: (user?.address != null && user!.address!.isNotEmpty)
-                                ? user.address!
-                                : 'Not provided',
-                            color: Colors.orange,
-                            isLast: true,
-                            isDarkMode: isDarkMode,
+                          Builder(
+                            builder: (context) {
+                              final parts = [
+                                user?.addressLine,
+                                user?.areaLocality,
+                                user?.city,
+                                user?.district,
+                                user?.state,
+                                user?.country,
+                                user?.postalCode?.toString(),
+                              ]
+                                  .where(
+                                      (p) => p != null && p.trim().isNotEmpty)
+                                  .toList();
+
+                              final fullAddress = parts.isNotEmpty
+                                  ? parts.join(', ')
+                                  : (user?.address != null &&
+                                          user!.address!.isNotEmpty
+                                      ? user.address!
+                                      : 'Not provided');
+
+                              return _settingsTile(
+                                icon: LucideIcons.mapPin,
+                                title: 'Address',
+                                value: fullAddress,
+                                color: Colors.orange,
+                                isLast: true,
+                                isDarkMode: isDarkMode,
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -141,7 +176,8 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 28),
 
                     // ── App Settings ──
-                    const FluentSectionHeader(title: 'APPLICATION', icon: LucideIcons.settings),
+                    const FluentSectionHeader(
+                        title: 'APPLICATION', icon: LucideIcons.settings),
                     const SizedBox(height: 12),
                     FluentCard(
                       padding: EdgeInsets.zero,
@@ -179,7 +215,8 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 28),
 
                     // ── Support ──
-                    const FluentSectionHeader(title: 'SUPPORT', icon: LucideIcons.helpCircle),
+                    const FluentSectionHeader(
+                        title: 'SUPPORT', icon: LucideIcons.helpCircle),
                     const SizedBox(height: 12),
                     FluentCard(
                       padding: EdgeInsets.zero,
@@ -222,47 +259,255 @@ class ProfileScreen extends ConsumerWidget {
 
   // ─── Component Builders ───
 
-  Widget _buildAvatar(dynamic user, bool isDarkMode) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(3),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-        child: Container(
-          width: 90,
-          height: 90,
+  Widget _buildAvatar(
+      BuildContext context, WidgetRef ref, dynamic user, bool isDarkMode) {
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3), width: 1.5),
           ),
-          child: Center(
-            child: Icon(
-              _getRoleIcon(user?.role),
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: const BoxDecoration(
               color: Colors.white,
-              size: 42,
+              shape: BoxShape.circle,
             ),
+            child: Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: user?.photoUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: user!.photoUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        ),
+                        errorWidget: (context, url, error) => Center(
+                          child: Icon(
+                            _getRoleIcon(user?.role),
+                            color: Colors.white,
+                            size: 42,
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          _getRoleIcon(user?.role),
+                          color: Colors.white,
+                          size: 42,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: GestureDetector(
+            onTap: () => _showPhotoOptions(context, ref, user),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child:
+                  const Icon(LucideIcons.camera, color: Colors.white, size: 16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showPhotoOptions(BuildContext context, WidgetRef ref, dynamic user) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16).copyWith(
+          bottom: MediaQuery.of(context).padding.bottom + 16,
+        ),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E1E2E) : Colors.white,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+              color: isDarkMode ? Colors.white12 : Colors.grey.shade100),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.white12 : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            _photoOptionTile(
+              context,
+              icon: LucideIcons.camera,
+              title: 'Take a Photo',
+              subtitle: 'Capture using camera',
+              color: AppColors.primary,
+              onTap: () {
+                Navigator.pop(context);
+                _processItem(context, ref, ImageSource.camera);
+              },
+              isDarkMode: isDarkMode,
+            ),
+            _photoOptionTile(
+              context,
+              icon: LucideIcons.image,
+              title: 'Choose from Gallery',
+              subtitle: 'Select from your photos',
+              color: Colors.blue,
+              onTap: () {
+                Navigator.pop(context);
+                _processItem(context, ref, ImageSource.gallery);
+              },
+              isDarkMode: isDarkMode,
+            ),
+            if (user?.photoUrl != null)
+              _photoOptionTile(
+                context,
+                icon: LucideIcons.trash2,
+                title: 'Remove Photo',
+                subtitle: 'Revert to default icon',
+                color: Colors.red,
+                isLast: true,
+                onTap: () async {
+                  Navigator.pop(context);
+                  await ref.read(authProvider.notifier).removeProfilePhoto();
+                  if (context.mounted) {
+                    SuccessPopup.show(context,
+                        message: 'Photo Removed Successfully',
+                        icon: LucideIcons.trash2);
+                  }
+                },
+                isDarkMode: isDarkMode,
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _photoOptionTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+    required bool isDarkMode,
+    bool isLast = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: isLast
+            ? const BorderRadius.vertical(bottom: Radius.circular(32))
+            : BorderRadius.zero,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900, fontSize: 15),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDarkMode
+                            ? Colors.white38
+                            : AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(LucideIcons.chevronRight,
+                  size: 18,
+                  color: isDarkMode ? Colors.white12 : Colors.grey.shade300),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _processItem(
+      BuildContext context, WidgetRef ref, ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: source, imageQuality: 70);
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    await ref.read(authProvider.notifier).uploadProfilePhoto(bytes);
+
+    if (context.mounted) {
+      SuccessPopup.show(
+        context,
+        message: 'Profile Photo Updated!',
+        icon: LucideIcons.image,
+      );
+    }
   }
 
   IconData _getRoleIcon(String? role) {
@@ -301,7 +546,9 @@ class ProfileScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            user?.isVerified == true ? LucideIcons.shieldCheck : LucideIcons.shieldAlert,
+            user?.isVerified == true
+                ? LucideIcons.shieldCheck
+                : LucideIcons.shieldAlert,
             size: 14,
             color: Colors.white,
           ),
@@ -331,7 +578,13 @@ class ProfileScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        border: isLast ? null : Border(bottom: BorderSide(color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50)),
+        border: isLast
+            ? null
+            : Border(
+                bottom: BorderSide(
+                    color: isDarkMode
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.grey.shade50)),
       ),
       child: Row(
         children: [
@@ -353,7 +606,8 @@ class ProfileScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white38 : AppColors.textSecondary,
+                    color:
+                        isDarkMode ? Colors.white38 : AppColors.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -412,7 +666,8 @@ class ProfileScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
-                        color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                        color:
+                            isDarkMode ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -420,7 +675,9 @@ class ProfileScreen extends ConsumerWidget {
                       subtitle,
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDarkMode ? Colors.white38 : AppColors.textSecondary,
+                        color: isDarkMode
+                            ? Colors.white38
+                            : AppColors.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -430,7 +687,9 @@ class ProfileScreen extends ConsumerWidget {
               Icon(
                 LucideIcons.chevronRight,
                 size: 18,
-                color: isDarkMode ? Colors.white24 : AppColors.textSecondary.withValues(alpha: 0.4),
+                color: isDarkMode
+                    ? Colors.white24
+                    : AppColors.textSecondary.withValues(alpha: 0.4),
               ),
             ],
           ),
@@ -439,13 +698,16 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context, WidgetRef ref, bool isDarkMode) {
+  Widget _buildLogoutButton(
+      BuildContext context, WidgetRef ref, bool isDarkMode) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () => _confirmLogout(context, ref, isDarkMode),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDarkMode ? Colors.red.withValues(alpha: 0.1) : Colors.red.shade50,
+          backgroundColor: isDarkMode
+              ? Colors.red.withValues(alpha: 0.1)
+              : Colors.red.shade50,
           foregroundColor: Colors.red,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -459,7 +721,11 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             Icon(LucideIcons.logOut, size: 20),
             const SizedBox(width: 12),
-            Text('LOGOUT FROM SESSION', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5, fontSize: 13)),
+            Text('LOGOUT FROM SESSION',
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                    fontSize: 13)),
           ],
         ),
       ),
@@ -471,7 +737,8 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       builder: (_) => FluentDialog(
         title: 'Confirm Logout',
-        content: 'Are you sure you want to end your active session and exit for now?',
+        content:
+            'Are you sure you want to end your active session and exit for now?',
         confirmLabel: 'LOGOUT',
         cancelLabel: 'STAY',
         onConfirm: () async {
