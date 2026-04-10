@@ -19,6 +19,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final textTheme = theme.textTheme;
     final authState = ref.watch(authProvider);
     final summaryAsync = ref.watch(summaryProvider);
+    final notifsAsync = ref.watch(notificationsProvider);
+    final hasUnreadNotifs = notifsAsync.asData?.value.any((n) => n['is_read'] != true) ?? false;
     final user = authState.asData?.value;
     final isDarkMode = theme.brightness == Brightness.dark;
 
@@ -110,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             icon: LucideIcons.bell,
                             onTap: () => context.push('/alerts'),
                             isDarkMode: isDarkMode,
-                            hasNotification: true,
+                            hasNotification: hasUnreadNotifs,
                           ),
                         ],
                       ),

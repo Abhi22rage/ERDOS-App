@@ -36,7 +36,34 @@ mixin _BreakdownMixin on _AuthMixin {
           .from('breakdown_reports')
           .update({'status': newStatus}).eq('id', id);
     } catch (e) {
-      debugPrint('Update status error: $e');
+      debugPrint('Update status error: $e. Falling back to local mock addition.');
+      final current = await getBreakdownById(id);
+      final updated = BreakdownModel(
+          id: current.id,
+          reportNumber: current.reportNumber,
+          title: current.title,
+          description: current.description,
+          status: newStatus,
+          severity: current.severity,
+          assetName: current.assetName,
+          assetId: current.assetId,
+          componentCategory: current.componentCategory,
+          componentType: current.componentType,
+          componentUnit: current.componentUnit,
+          locationLat: current.locationLat,
+          locationLng: current.locationLng,
+          locationAddress: current.locationAddress,
+          mediaUrls: current.mediaUrls,
+          reportedBy: current.reportedBy,
+          createdAt: current.createdAt,
+      );
+      
+      final localIdx = ApiService.localIncidents.indexWhere((i) => i.id == id);
+      if (localIdx != -1) {
+          ApiService.localIncidents[localIdx] = updated;
+      } else {
+          ApiService.localIncidents.add(updated);
+      }
     }
   }
 
@@ -47,7 +74,8 @@ mixin _BreakdownMixin on _AuthMixin {
             *,
             asset:assets(id, name, component_type),
             work_stages:sopd_progress_logs(*),
-            approvals:audit_log(*)
+            approvals:audit_log(*),
+            repair_media(*)
           ''').order('created_at', ascending: false);
 
       final data = await query;
@@ -65,7 +93,8 @@ mixin _BreakdownMixin on _AuthMixin {
             *,
             asset:assets(id, name, component_type),
             work_stages:sopd_progress_logs(*),
-            approvals:audit_log(*)
+            approvals:audit_log(*),
+            repair_media(*)
           ''').eq('reported_by', userId).order('created_at', ascending: false);
 
       final dbItems = data.map((j) => BreakdownModel.fromJson(j)).toList();
@@ -108,7 +137,8 @@ mixin _BreakdownMixin on _AuthMixin {
             *,
             asset:assets(id, name, component_type),
             work_stages:sopd_progress_logs(*),
-            approvals:audit_log(*)
+            approvals:audit_log(*),
+            repair_media(*)
           ''').eq('id', id).single();
 
       return BreakdownModel.fromJson(data);
@@ -146,7 +176,7 @@ mixin _BreakdownMixin on _AuthMixin {
     final payload = {
       ...data,
       'reported_by': userId,
-      'status': 'reported',
+      'status': 'pending_approval',
       'submitted_at': DateTime.now().toIso8601String(),
     };
 
@@ -167,7 +197,7 @@ mixin _BreakdownMixin on _AuthMixin {
         reportNumber: data['report_number'] ?? 'INC-NEW',
         title: data['title'] ?? 'New Incident',
         description: data['description'],
-        status: 'reported',
+        status: 'pending_approval',
         severity: data['severity'] ?? 'medium',
         assetName: data['asset_name'],
         assetId: data['asset_id'],

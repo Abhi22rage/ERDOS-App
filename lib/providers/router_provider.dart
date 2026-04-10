@@ -13,6 +13,7 @@ import '../screens/tasks/my_tasks_screen.dart';
 import '../screens/tasks/approval_dashboard_screen.dart';
 import '../screens/schemes/schemes_screen.dart';
 import '../screens/contractors/contractors_screen.dart';
+import '../screens/contractors/contractor_profile_screen.dart';
 import '../screens/assets/assets_screen.dart';
 import '../screens/assets/asset_details_screen.dart';
 import '../screens/reports/reports_screen.dart';
@@ -92,6 +93,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/contractors',
             builder: (context, state) => const ContractorsScreen(),
+          ),
+          GoRoute(
+            path: '/contractor-profile',
+            builder: (context, state) => ContractorProfileScreen(contractor: state.extra as Map<String, dynamic>),
           ),
           GoRoute(
             path: '/assets',

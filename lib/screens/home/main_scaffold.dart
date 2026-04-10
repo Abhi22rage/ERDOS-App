@@ -75,11 +75,21 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
                                 color: isActive ? activeColor.withValues(alpha: 0.1) : Colors.transparent,
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: Icon(
-                                _tabs[i].icon,
-                                size: 20,
-                                color: isActive ? activeColor : (isDarkMode ? Colors.white24 : AppColors.tabInactive),
-                              ),
+                              child: _tabs[i].path == '/alerts' && (ref.watch(notificationsProvider).asData?.value.any((n) => n['is_read'] != true) ?? false)
+                                  ? Badge(
+                                      smallSize: 8,
+                                      backgroundColor: Colors.red,
+                                      child: Icon(
+                                        _tabs[i].icon,
+                                        size: 20,
+                                        color: isActive ? activeColor : (isDarkMode ? Colors.white24 : AppColors.tabInactive),
+                                      ),
+                                    )
+                                  : Icon(
+                                      _tabs[i].icon,
+                                      size: 20,
+                                      color: isActive ? activeColor : (isDarkMode ? Colors.white24 : AppColors.tabInactive),
+                                    ),
                             ),
                             const SizedBox(height: 4),
                             Text(

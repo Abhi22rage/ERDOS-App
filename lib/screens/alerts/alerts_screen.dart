@@ -23,6 +23,7 @@ class AlertsScreen extends ConsumerWidget {
                 title: 'Alerts & Notifications',
                 actions: [
                   GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () async {
                       await ref.read(apiServiceProvider).markAllNotificationsRead();
                       ref.invalidate(notificationsProvider);

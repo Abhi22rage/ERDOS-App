@@ -1,63 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/fluent_ui.dart';
 
-class ContractorsScreen extends ConsumerWidget {
+class ContractorsScreen extends ConsumerStatefulWidget {
   const ContractorsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ContractorsScreen> createState() => _ContractorsScreenState();
+}
+
+class _ContractorsScreenState extends ConsumerState<ContractorsScreen> {
+  String selectedFilter = 'All';
+
+  final List<String> categories = [
+    'All',
+    'Pipeline Repair & Laying',
+    'HT/LT Electrical Works',
+    'Pump & Motor Maintenance',
+    'Civil & Structural Works',
+    'Mechanical Overhauling',
+  ];
+
+  final List<Map<String, dynamic>> contractors = [
+    {
+      'id': '1',
+      'name': 'ABC Constructions',
+      'contact_person': 'Ramesh Kumar',
+      'phone': '+91 98765 43210',
+      'specialty': 'Pipeline Repair & Laying',
+      'rating': 4.8,
+      'experience': '12 Years',
+    },
+    {
+      'id': '2',
+      'name': 'RK Electricals',
+      'contact_person': 'Suresh Das',
+      'phone': '+91 87654 32109',
+      'specialty': 'HT/LT Electrical Works',
+      'rating': 4.5,
+      'experience': '8 Years',
+    },
+    {
+      'id': '3',
+      'name': 'Northeast Pumps & Motors',
+      'contact_person': 'Pranab Saikia',
+      'phone': '+91 76543 21098',
+      'specialty': 'Pump & Motor Maintenance',
+      'rating': 4.9,
+      'experience': '15 Years',
+    },
+    {
+      'id': '4',
+      'name': 'Buildwell Infra',
+      'contact_person': 'Anil Sarma',
+      'phone': '+91 65432 10987',
+      'specialty': 'Civil & Structural Works',
+      'rating': 4.2,
+      'experience': '10 Years',
+    },
+    {
+      'id': '5',
+      'name': 'Quality Repairs Ltd',
+      'contact_person': 'Diganta Baruah',
+      'phone': '+91 54321 09876',
+      'specialty': 'Mechanical Overhauling',
+      'rating': 4.7,
+      'experience': '6 Years',
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    final List<Map<String, dynamic>> contractors = [
-      {
-        'id': '1',
-        'name': 'ABC Constructions',
-        'contact_person': 'Ramesh Kumar',
-        'phone': '+91 98765 43210',
-        'specialty': 'Pipeline Repair & Laying',
-        'rating': 4.8,
-        'experience': '12 Years',
-      },
-      {
-        'id': '2',
-        'name': 'RK Electricals',
-        'contact_person': 'Suresh Das',
-        'phone': '+91 87654 32109',
-        'specialty': 'HT/LT Electrical Works',
-        'rating': 4.5,
-        'experience': '8 Years',
-      },
-      {
-        'id': '3',
-        'name': 'Northeast Pumps & Motors',
-        'contact_person': 'Pranab Saikia',
-        'phone': '+91 76543 21098',
-        'specialty': 'Pump & Motor Maintenance',
-        'rating': 4.9,
-        'experience': '15 Years',
-      },
-      {
-        'id': '4',
-        'name': 'Buildwell Infra',
-        'contact_person': 'Anil Sarma',
-        'phone': '+91 65432 10987',
-        'specialty': 'Civil & Structural Works',
-        'rating': 4.2,
-        'experience': '10 Years',
-      },
-      {
-        'id': '5',
-        'name': 'Quality Repairs Ltd',
-        'contact_person': 'Diganta Baruah',
-        'phone': '+91 54321 09876',
-        'specialty': 'Mechanical Overhauling',
-        'rating': 4.7,
-        'experience': '6 Years',
-      },
-    ];
+    final filteredContractors = contractors.where((c) {
+      if (selectedFilter == 'All') return true;
+      return c['specialty'] == selectedFilter;
+    }).toList();
 
     return Scaffold(
       body: FluentBackground(
@@ -69,18 +91,70 @@ class ContractorsScreen extends ConsumerWidget {
                 title: 'Contractors',
               ),
 
+              // ── Filter Dropdown ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Text('Filter:', style: TextStyle(color: isDarkMode ? Colors.white70 : AppColors.textSecondary, fontWeight: FontWeight.w700)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.1) : AppColors.primary.withOpacity(0.2)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedFilter,
+                            dropdownColor: isDarkMode ? const Color(0xFF1E1E2E) : Colors.white,
+                            isExpanded: true,
+                            icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.primary),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            ),
+                            onChanged: (val) {
+                              if (val != null) setState(() => selectedFilter = val);
+                            },
+                            items: categories.map((cat) {
+                              return DropdownMenuItem(
+                                value: cat,
+                                child: Text(cat),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // ── List ──
               Expanded(
-                child: ListView.separated(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
-                  itemCount: contractors.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (_, i) {
-                    final c = contractors[i];
-                    return _ContractorCard(c: c, isDarkMode: isDarkMode);
-                  },
-                ),
+                child: filteredContractors.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No contractors found.',
+                          style: TextStyle(color: isDarkMode ? Colors.white54 : AppColors.textSecondary, fontWeight: FontWeight.w600),
+                        ),
+                      )
+                    : ListView.separated(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+                        itemCount: filteredContractors.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (_, i) {
+                          final c = filteredContractors[i];
+                          return _ContractorCard(c: c, isDarkMode: isDarkMode);
+                        },
+                      ),
               ),
             ],
           ),
@@ -177,7 +251,7 @@ class _ContractorCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {},
+                    onTap: () => context.push('/contractor-profile', extra: c),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(

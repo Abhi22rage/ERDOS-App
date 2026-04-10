@@ -21,6 +21,7 @@ class BreakdownModel {
   final List<WorkStageModel> workStages;
   final List<ApprovalModel> approvals;
   final List<String> mediaUrls;
+  final List<RepairMediaModel> repairMedia;
 
   BreakdownModel({
     required this.id,
@@ -45,6 +46,7 @@ class BreakdownModel {
     this.workStages = const [],
     this.approvals = const [],
     this.mediaUrls = const [],
+    this.repairMedia = const [],
   });
 
   factory BreakdownModel.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,10 @@ class BreakdownModel {
               ?.map((e) => e.toString())
               .toList() ??
           [],
+      repairMedia: (json['repair_media'] as List<dynamic>?)
+              ?.map((m) => RepairMediaModel.fromJson(m))
+              .toList() ??
+          [],
     );
   }
 
@@ -102,6 +108,34 @@ class BreakdownModel {
   ];
 
   int get statusIndex => statusOrder.indexOf(normalizedStatus);
+}
+
+class RepairMediaModel {
+  final String id;
+  final String stage;
+  final String mediaUrl;
+  final String mediaType;
+  final DateTime? capturedAt;
+
+  RepairMediaModel({
+    required this.id,
+    required this.stage,
+    required this.mediaUrl,
+    required this.mediaType,
+    this.capturedAt,
+  });
+
+  factory RepairMediaModel.fromJson(Map<String, dynamic> json) {
+    return RepairMediaModel(
+      id: json['id']?.toString() ?? '',
+      stage: json['stage'] ?? '',
+      mediaUrl: json['media_url'] ?? '',
+      mediaType: json['media_type'] ?? 'photo',
+      capturedAt: json['captured_at'] != null
+          ? DateTime.tryParse(json['captured_at'])
+          : null,
+    );
+  }
 }
 
 class WorkStageModel {

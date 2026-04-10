@@ -5,7 +5,9 @@ mixin _NotificationMixin {
   SupabaseClient get _client;
 
   Future<List<Map<String, dynamic>>> getNotifications() async {
-    final userId = _client.auth.currentUser?.id ?? ApiService.demoUserId;
+    final userId = ApiService.sessionUser?.id ?? 
+                   _client.auth.currentUser?.id ?? 
+                   ApiService.demoUserId;
     try {
       final data = await _client
           .from('notifications_log')
@@ -24,7 +26,7 @@ mixin _NotificationMixin {
     try {
       await _client
           .from('notifications_log')
-          .update({'status': 'sent'})
+          .update({'is_read': true, 'status': 'read'})
           .eq('id', id);
     } catch (e) {
       print('NOTIF UPDATE ERROR: $e');
@@ -32,11 +34,14 @@ mixin _NotificationMixin {
   }
 
   Future<void> markAllNotificationsRead() async {
-    final userId = _client.auth.currentUser?.id ?? ApiService.demoUserId;
+    final userId = ApiService.sessionUser?.id ?? 
+                   _client.auth.currentUser?.id ?? 
+                   ApiService.demoUserId;
     try {
       await _client
           .from('notifications_log')
-          .update({'status': 'sent'}).eq('sent_to', userId);
+          .update({'is_read': true, 'status': 'read'})
+          .eq('sent_to', userId);
     } catch (e) {
       print('NOTIF MARK ALL ERROR: $e');
     }
