@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -73,6 +75,7 @@ class IncidentDetailScreen extends ConsumerWidget {
             FluentCard(
               padding: const EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -93,14 +96,30 @@ class IncidentDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Text(
-                    breakdown.displayId,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'REPORTED ON ${DateFormat('dd MMMM yyyy').format(breakdown.createdAt).toUpperCase()}',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: isDarkMode ? Colors.white24 : AppColors.textSecondary),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              breakdown.displayId,
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'REPORTED ON ${DateFormat('dd MMMM yyyy').format(breakdown.createdAt).toUpperCase()}',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: isDarkMode ? Colors.white24 : AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (breakdown.statusIndex < 2) ...[
+                        const SizedBox(width: 16),
+                        _AutoApprovalTimer(createdAt: breakdown.createdAt, isDarkMode: isDarkMode),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -358,6 +377,103 @@ class IncidentDetailScreen extends ConsumerWidget {
           const Text('INCIDENT NOT FOUND', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
           const SizedBox(height: 8),
           TextButton(onPressed: () => context.pop(), child: const Text('GO BACK')),
+        ],
+      ),
+    );
+  }
+}
+
+class _AutoApprovalTimer extends StatefulWidget {
+  final DateTime createdAt;
+  final bool isDarkMode;
+  const _AutoApprovalTimer({required this.createdAt, required this.isDarkMode});
+
+  @override
+  State<_AutoApprovalTimer> createState() => _AutoApprovalTimerState();
+}
+
+class _AutoApprovalTimerState extends State<_AutoApprovalTimer> {
+  late Timer _timer;
+  late Duration _timeLeft;
+
+  @override
+  void initState() {
+    super.initState();
+    final autoApproveTime = widget.createdAt.add(const Duration(hours: 2));
+    final now = DateTime.now();
+    _timeLeft = autoApproveTime.isAfter(now) ? autoApproveTime.difference(now) : Duration.zero;
+    
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _calculateTimeLeft();
+    });
+  }
+
+  void _calculateTimeLeft() {
+    final autoApproveTime = widget.createdAt.add(const Duration(hours: 2));
+    final now = DateTime.now();
+    final newTimeLeft = autoApproveTime.isAfter(now) ? autoApproveTime.difference(now) : Duration.zero;
+    
+    if (_timeLeft.inSeconds != newTimeLeft.inSeconds) {
+      if (mounted) {
+        setState(() {
+          _timeLeft = newTimeLeft;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_timeLeft.inSeconds == 0) return const SizedBox.shrink();
+
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(_timeLeft.inHours);
+    final minutes = twoDigits(_timeLeft.inMinutes.remainder(60));
+    final seconds = twoDigits(_timeLeft.inSeconds.remainder(60));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(LucideIcons.timer, size: 24, color: AppColors.warning),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'AUTO-APPROVAL IN',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: widget.isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$hours:$minutes:$seconds',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.warning,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

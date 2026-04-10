@@ -2,6 +2,7 @@ part of 'api_service.dart';
 
 // ─── Breakdowns ───────────────────────────────────────────────────────────────
 mixin _BreakdownMixin on _AuthMixin {
+  @override
   SupabaseClient get _client;
 
   Future<void> updateBreakdownStatus(String id, String newStatus) async {
