@@ -14,13 +14,13 @@ import 'work_progress_upload_screen.dart';
 
 // ─── Progress Step Definitions ───────────────────────────────────────────────
 const _progressSteps = [
-  {'key': 'reported',         'label': 'Reported',         'icon': LucideIcons.fileText,    'desc': 'Incident submitted'},
-  {'key': 'pending_approval', 'label': 'Pending Approval', 'icon': LucideIcons.clock,       'desc': 'Awaiting engineer approval'},
-  {'key': 'approved',         'label': 'Approved',         'icon': LucideIcons.checkCircle, 'desc': 'Approved by engineer'},
-  {'key': 'assigned',         'label': 'Assigned',         'icon': LucideIcons.userPlus,    'desc': 'Team assigned to task'},
-  {'key': 'in_progress',     'label': 'In Progress',       'icon': LucideIcons.wrench,      'desc': 'Repair work ongoing'},
-  {'key': 'completed',       'label': 'Completed',          'icon': LucideIcons.flag,        'desc': 'Repair completed'},
-  {'key': 'closed',          'label': 'Closed',             'icon': LucideIcons.lock,        'desc': 'Case officially closed'},
+  {'key': 'reported',         'label': 'Reported',            'icon': LucideIcons.fileText,    'desc': 'Incident submitted'},
+  {'key': 'pending_approval', 'label': 'Pending Approval',    'icon': LucideIcons.clock,       'desc': 'Awaiting engineer approval'},
+  {'key': 'approved',         'label': 'Approved',            'icon': LucideIcons.checkCircle, 'desc': 'Work has been approved'},
+  {'key': 'assigned',         'label': 'Contractor Assigned', 'icon': LucideIcons.userPlus,    'desc': 'Team assigned to task'},
+  {'key': 'in_progress',      'label': 'In Progress',         'icon': LucideIcons.wrench,      'desc': 'Repair work ongoing'},
+  {'key': 'completed',        'label': 'Completed',           'icon': LucideIcons.flag,        'desc': 'Repair completed'},
+  {'key': 'closed',           'label': 'Closed',              'icon': LucideIcons.lock,        'desc': 'Case officially closed'},
 ];
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────

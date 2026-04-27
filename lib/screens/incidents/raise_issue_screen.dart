@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +10,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/constants/component_codes.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
-import '../../core/constants/dispur_wss_components.dart';
+import '../../core/constants/dispur_pwss_components.dart';
 import '../../widgets/fluent_ui.dart';
 
 class RaiseIssueScreen extends ConsumerStatefulWidget {
@@ -78,8 +77,10 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
       Position? position;
       try {
         position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 8),
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 8),
+          ),
         );
       } catch (_) {
         // Fallback to last known position if timeout
@@ -195,8 +196,10 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
         Position? pos;
         try {
           pos = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.medium,
-            timeLimit: const Duration(seconds: 5),
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+              timeLimit: Duration(seconds: 5),
+            ),
           );
         } catch (_) {
           pos = await Geolocator.getLastKnownPosition();
@@ -371,7 +374,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
+                    color: AppColors.success.withValues(alpha: 0.1),
                     shape: BoxShape.circle),
                 child: const Icon(LucideIcons.checkCircle2,
                     color: AppColors.success, size: 36),
@@ -462,7 +465,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                             'Production Center',
                             'Select Center',
                             _selectedScheme,
-                            ['Dispur WSS', 'GU & AEC WSS', 'Sarusajai WSS'],
+                            ['Dispur PWSS', 'GU & AEC PWSS', 'Sarusajai PWSS'],
                             (v) {
                           setState(() {
                             _selectedScheme = v;
@@ -559,7 +562,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                             backgroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             elevation: 8,
-                            shadowColor: AppColors.primary.withOpacity(0.3),
+                            shadowColor: AppColors.primary.withValues(alpha: 0.3),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20)),
                           ),
@@ -619,12 +622,12 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: isDarkMode
-                ? Colors.white.withOpacity(0.05)
+                ? Colors.white.withValues(alpha: 0.05)
                 : const Color(0xFFF9FAFF),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: isDarkMode
-                    ? Colors.white.withOpacity(0.05)
+                    ? Colors.white.withValues(alpha: 0.05)
                     : Colors.transparent),
           ),
           child: DropdownButtonHideUnderline(
@@ -677,7 +680,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                 color: isDarkMode ? Colors.white24 : Colors.grey.shade400),
             filled: true,
             fillColor: isDarkMode
-                ? Colors.white.withOpacity(0.05)
+                ? Colors.white.withValues(alpha: 0.05)
                 : const Color(0xFFF9FAFF),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -712,11 +715,11 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.white.withOpacity(0.03)
-                    : AppColors.primary.withOpacity(0.02),
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : AppColors.primary.withValues(alpha: 0.02),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
                   style: BorderStyle.solid,
                   width: 2,
                 ),
@@ -727,7 +730,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                   _isGeoTagging
                       ? const CircularProgressIndicator(strokeWidth: 2)
                       : Icon(LucideIcons.camera,
-                          size: 32, color: AppColors.primary.withOpacity(0.6)),
+                          size: 32, color: AppColors.primary.withValues(alpha: 0.6)),
                   const SizedBox(height: 12),
                   Text(
                     _isGeoTagging
@@ -735,7 +738,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                         : 'Tap to add photos/videos',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.primary.withOpacity(0.6),
+                      color: AppColors.primary.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -747,7 +750,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(isDarkMode ? 0.08 : 0.04),
+              color: AppColors.primary.withValues(alpha: isDarkMode ? 0.08 : 0.04),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -800,7 +803,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.65),
+                            color: Colors.black.withValues(alpha: 0.65),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -913,13 +916,13 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
           color: isDarkMode
-              ? Colors.white.withOpacity(0.03)
+              ? Colors.white.withValues(alpha: 0.03)
               : const Color(0xFFF0F3F9),
           borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Icon(LucideIcons.mapPin,
-              size: 16, color: AppColors.primary.withOpacity(0.6)),
+              size: 16, color: AppColors.primary.withValues(alpha: 0.6)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -961,7 +964,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
   }
 
   // Data helpers
-  List<String> _getAssets() => _selectedScheme == 'Dispur WSS'
+  List<String> _getAssets() => _selectedScheme == 'Dispur PWSS'
       ? [
           'Intake (Barge)',
           'Water Treatment Plant',
@@ -969,12 +972,12 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
           'Pipelines'
         ]
       : ['Boosting Stations', 'Pipelines'];
-  List<String> _getCategories() => _selectedScheme == 'Dispur WSS'
+  List<String> _getCategories() => _selectedScheme == 'Dispur PWSS'
       ? wtpComponentCategories
       : ['Electrical', 'Mechanical', 'Civil', 'Consumables'];
   List<String> _getTypes() {
     if (_selectedComponentCategory == null) return [];
-    if (_selectedScheme == 'Dispur WSS') {
+    if (_selectedScheme == 'Dispur PWSS') {
       return groupedWtpComponents[_selectedComponentCategory]!
           .map((c) => c.name)
           .toSet()
@@ -985,7 +988,7 @@ class _RaiseIssueScreenState extends ConsumerState<RaiseIssueScreen> {
 
   List<String> _getUnits() {
     if (_selectedComponentType == null) return [];
-    if (_selectedScheme == 'Dispur WSS' &&
+    if (_selectedScheme == 'Dispur PWSS' &&
         (_selectedAsset == 'Intake (Barge)' ||
             _selectedAsset == 'Water Treatment Plant')) {
       final matches = wtpComponents.where((c) {

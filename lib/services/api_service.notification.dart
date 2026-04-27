@@ -17,7 +17,6 @@ mixin _NotificationMixin {
           .limit(50);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      print('NOTIFICATION ERROR: $e');
       return [];
     }
   }
@@ -29,7 +28,7 @@ mixin _NotificationMixin {
           .update({'is_read': true, 'status': 'read'})
           .eq('id', id);
     } catch (e) {
-      print('NOTIF UPDATE ERROR: $e');
+      // ignore: empty_catches
     }
   }
 
@@ -43,7 +42,7 @@ mixin _NotificationMixin {
           .update({'is_read': true, 'status': 'read'})
           .eq('sent_to', userId);
     } catch (e) {
-      print('NOTIF MARK ALL ERROR: $e');
+      // ignore: empty_catches
     }
   }
 }

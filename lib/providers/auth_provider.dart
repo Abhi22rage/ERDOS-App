@@ -50,7 +50,9 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     final user = state.value;
     if (user == null) return;
     
-    state = const AsyncValue.loading();
+    // Use copyWithPrevious to keep the current user data visible while loading
+    // ignore: invalid_use_of_internal_member
+    state = const AsyncLoading<UserModel?>().copyWithPrevious(state);
     try {
       final url = await ref.read(apiServiceProvider).uploadProfilePhoto(user.id, bytes);
       await updateProfile({'photo_url': url});
@@ -63,7 +65,8 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     final user = state.value;
     if (user == null) return;
 
-    state = const AsyncValue.loading();
+    // ignore: invalid_use_of_internal_member
+    state = const AsyncLoading<UserModel?>().copyWithPrevious(state);
     try {
       await ref.read(apiServiceProvider).removeProfilePhoto(user.id);
       await updateProfile({'photo_url': null});

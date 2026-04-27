@@ -57,9 +57,9 @@ class GPSImageOverlay extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 300),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.1), width: 0.5),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -101,7 +101,7 @@ class GPSImageOverlay extends StatelessWidget {
                     Text(
                       "🌐 ${breakdown.locationLat!.toStringAsFixed(4)}° N , ${breakdown.locationLng!.toStringAsFixed(4)}° E",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                       ),
@@ -109,12 +109,12 @@ class GPSImageOverlay extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.access_time, color: Colors.white.withOpacity(0.6), size: 10),
+                      Icon(Icons.access_time, color: Colors.white.withValues(alpha: 0.6), size: 10),
                       const SizedBox(width: 4),
                       Text(
                         timestamp,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 9,
                           fontWeight: FontWeight.w400,
                         ),

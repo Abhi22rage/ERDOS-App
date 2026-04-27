@@ -75,7 +75,7 @@ mixin _AuthMixin {
     final name = userData['name'] as String?;
     final role = userData['role'] ?? 'khalasi';
 
-    final email = '${mobile}@phe.app';
+    final email = '$mobile@phe.app';
 
     final response = await _client.auth.signUp(
       email: email,
@@ -110,24 +110,21 @@ mixin _AuthMixin {
   Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
     try {
       if (ApiService.sessionUser != null && ApiService.sessionUser!.id == userId) {
-        ApiService.sessionUser = UserModel(
-          id: ApiService.sessionUser!.id,
-          name: data['name'] ?? ApiService.sessionUser!.name,
-          mobile: data['phone'] ?? ApiService.sessionUser!.mobile,
-          email: ApiService.sessionUser!.email,
-          role: ApiService.sessionUser!.role,
-          category: ApiService.sessionUser!.category,
-          isVerified: ApiService.sessionUser!.isVerified,
-          fcmToken: ApiService.sessionUser!.fcmToken,
-          address: data['address'] ?? ApiService.sessionUser!.address,
-          addressLine: data['address_line'] ?? ApiService.sessionUser!.addressLine,
-          areaLocality: data['area_locality'] ?? ApiService.sessionUser!.areaLocality,
-          city: data['city'] ?? ApiService.sessionUser!.city,
-          state: data['state'] ?? ApiService.sessionUser!.state,
-          district: data['district'] ?? ApiService.sessionUser!.district,
-          country: data['country'] ?? ApiService.sessionUser!.country,
-          postalCode: data['postal_code'] ?? ApiService.sessionUser!.postalCode,
-          createdAt: ApiService.sessionUser!.createdAt,
+        ApiService.sessionUser = ApiService.sessionUser!.copyWith(
+          name: data['name'],
+          mobile: data['phone'],
+          address: data['address'],
+          addressLine: data['address_line'],
+          areaLocality: data['area_locality'],
+          city: data['city'],
+          state: data['state'],
+          district: data['district'],
+          country: data['country'],
+          postalCode: data['postal_code'] is int 
+              ? data['postal_code'] 
+              : int.tryParse(data['postal_code']?.toString() ?? ''),
+          photoUrl: data.containsKey('photo_url') ? data['photo_url'] : null,
+          clearPhotoUrl: data.containsKey('photo_url') && data['photo_url'] == null,
         );
       }
       await _client.from('users').update(data).eq('id', userId);

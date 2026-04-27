@@ -9,6 +9,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/home/main_scaffold.dart';
 import '../screens/incidents/raise_issue_screen.dart';
 import '../screens/incidents/incident_detail_screen.dart';
+import '../screens/incidents/apply_certificate_screen.dart';
 import '../screens/tasks/my_tasks_screen.dart';
 import '../screens/tasks/approval_dashboard_screen.dart';
 import '../screens/schemes/schemes_screen.dart';
@@ -135,6 +136,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/certificate-report',
         builder: (context, state) => const CertificateReportScreen(),
+      ),
+      GoRoute(
+        path: '/certificate-report/:id',
+        builder: (context, state) => CertificateReportScreen(
+          incidentId: state.pathParameters['id'],
+          budget: state.uri.queryParameters['budget'],
+        ),
+      ),
+      GoRoute(
+        path: '/apply-certificate/:id',
+        builder: (context, state) => ApplyCertificateScreen(
+          incidentId: state.pathParameters['id']!,
+        ),
       ),
     ],
   );

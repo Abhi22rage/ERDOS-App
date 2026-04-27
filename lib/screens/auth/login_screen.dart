@@ -143,7 +143,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   color: isDarkMode
                                       ? Colors.white24
                                       : AppColors.textSecondary
-                                          .withOpacity(0.5),
+                                          .withValues(alpha: 0.5),
                                   size: 18,
                                 ),
                                 onPressed: () => setState(
@@ -247,7 +247,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(LucideIcons.droplets,
@@ -302,12 +302,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Container(
           decoration: BoxDecoration(
             color: isDarkMode
-                ? Colors.white.withOpacity(0.05)
+                ? Colors.white.withValues(alpha: 0.05)
                 : const Color(0xFFF0F3F9),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
                 color: isDarkMode
-                    ? Colors.white.withOpacity(0.1)
+                    ? Colors.white.withValues(alpha: 0.1)
                     : Colors.transparent),
           ),
           child: TextField(
@@ -325,7 +325,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   size: 18,
                   color: isDarkMode
                       ? Colors.white38
-                      : AppColors.primary.withOpacity(0.6)),
+                      : AppColors.primary.withValues(alpha: 0.6)),
               suffixIcon: suffix,
               counterText: '',
               border: InputBorder.none,

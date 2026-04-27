@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_theme.dart';
 
 /// ─── Fluent Background ───
@@ -240,6 +241,111 @@ class FluentDialog extends StatelessWidget {
             child: Text(confirmLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// ─── Fluent Image Viewer ───
+class FluentImageViewer extends StatelessWidget {
+  final String imageUrl;
+  final String? title;
+
+  const FluentImageViewer({super.key, required this.imageUrl, this.title});
+
+  static void show(BuildContext context, {required String imageUrl, String? title}) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close',
+      barrierColor: Colors.black.withValues(alpha: 0.75),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return FadeTransition(
+          opacity: anim1,
+          child: FluentImageViewer(imageUrl: imageUrl, title: title),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Tap to dismiss barrier
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: size.width,
+                height: size.height,
+                color: Colors.transparent,
+              ),
+            ),
+            
+            // The Image Card
+            Container(
+              width: size.width * 0.85,
+              height: size.width * 0.85, // Square card
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: Container(
+                  color: Theme.of(context).cardColor,
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 3.0,
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(
+                        LucideIcons.imageOff,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            
+            // Close Button Overlay
+            Positioned(
+              top: (size.height - size.width * 0.85) / 2 - 60,
+              right: (size.width - size.width * 0.85) / 2,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.x, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

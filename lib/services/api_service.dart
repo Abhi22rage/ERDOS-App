@@ -25,6 +25,7 @@ class ApiService
         _NotificationMixin,
         _ReportMixin,
         _MediaMixin {
+  @override
   final SupabaseClient _client = Supabase.instance.client;
 
   // Shared in-memory state for demo/mock behavior

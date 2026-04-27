@@ -6,6 +6,9 @@ import 'dart:ui' as ui;
 import '../theme/app_theme.dart';
 import '../models/user_model.dart';
 import '../providers/providers.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'success_popup.dart';
 
 void showEditProfileModal(BuildContext context, WidgetRef ref, UserModel user) {
@@ -66,6 +69,250 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     _countryController.dispose();
     _postalCodeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
+    if (picked == null) return;
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressQuality: 90,
+      maxWidth: 512,
+      maxHeight: 512,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Edit Profile Photo',
+          toolbarColor: AppColors.primary,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Edit Profile Photo',
+          aspectRatioLockEnabled: true,
+        ),
+        WebUiSettings(
+          context: context,
+          presentStyle: WebPresentStyle.dialog,
+          size: const CropperSize(width: 400, height: 400),
+          customDialogBuilder: (cropper, initCropper, crop, rotate, scale) {
+            double zoomValue = 1.0;
+            return StatefulBuilder(
+              builder: (context, setState) {
+                // Initialize cropper on first build
+                initCropper();
+                
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+
+                return Dialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+                  child: Container(
+                    width: 460,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Crop Image',
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(LucideIcons.x, size: 20),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: SizedBox(width: 400, height: 400, child: cropper),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Zoom Control Section
+                        Column(
+                          children: [
+                            const Text(
+                              'Zoom',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(LucideIcons.rotateCcw, size: 20),
+                                  onPressed: () => rotate(RotationAngle.counterClockwise90),
+                                  tooltip: 'Rotate Left',
+                                ),
+                                const Text('-', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                                Expanded(
+                                  child: SliderTheme(
+                                    data: SliderTheme.of(context).copyWith(
+                                      activeTrackColor: AppColors.primary,
+                                      thumbColor: AppColors.primary,
+                                      overlayColor: AppColors.primary.withValues(alpha: 0.1),
+                                    ),
+                                    child: Slider(
+                                      value: zoomValue,
+                                      min: 1.0,
+                                      max: 3.0,
+                                      onChanged: (value) {
+                                        setState(() => zoomValue = value);
+                                        scale(value);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const Text('+', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.rotateCw, size: 20),
+                                  onPressed: () => rotate(RotationAngle.clockwise90),
+                                  tooltip: 'Rotate Right',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('CANCEL', style: TextStyle(fontWeight: FontWeight.w800)),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final result = await crop();
+                                if (context.mounted) Navigator.pop(context, result);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('CROP', style: TextStyle(fontWeight: FontWeight.w900)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+
+    if (mounted) {
+      Navigator.pop(context); // Close sheet after cropper interaction
+    }
+
+    if (croppedFile == null) return;
+
+    final bytes = await croppedFile.readAsBytes();
+    await ref.read(authProvider.notifier).uploadProfilePhoto(bytes);
+  }
+
+  void _showPhotoOptions() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16).copyWith(
+          bottom: MediaQuery.of(context).padding.bottom + 16,
+        ),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E1E2E) : Colors.white,
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.white12 : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            _photoOptionTile(
+              icon: LucideIcons.camera,
+              title: 'Take a Photo',
+              subtitle: 'Capture using camera',
+              onTap: () => _pickImage(ImageSource.camera),
+              color: AppColors.primary,
+              isDarkMode: isDarkMode,
+            ),
+            _photoOptionTile(
+              icon: LucideIcons.image,
+              title: 'Choose from Gallery',
+              subtitle: 'Select from your photos',
+              onTap: () => _pickImage(ImageSource.gallery),
+              color: Colors.blue,
+              isDarkMode: isDarkMode,
+            ),
+            if (widget.user.photoUrl != null)
+              _photoOptionTile(
+                icon: LucideIcons.trash2,
+                title: 'Remove Photo',
+                subtitle: 'Delete current photo',
+                onTap: () async {
+                  Navigator.pop(context);
+                  await ref.read(authProvider.notifier).removeProfilePhoto();
+                },
+                color: Colors.red,
+                isDarkMode: isDarkMode,
+              ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _photoOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required Color color,
+    required bool isDarkMode,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: color, size: 22),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white38 : AppColors.textSecondary)),
+      trailing: Icon(LucideIcons.chevronRight, size: 18, color: isDarkMode ? Colors.white12 : Colors.grey.shade300),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+    );
   }
 
   Future<void> _saveProfile() async {
@@ -189,7 +436,63 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
+
+              // Profile Image Selector
+              Center(
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isDarkMode ? Colors.white10 : Colors.grey.shade100,
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                          width: 2,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: widget.user.photoUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: widget.user.photoUrl!,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : Icon(
+                                LucideIcons.user,
+                                size: 40,
+                                color: isDarkMode ? Colors.white24 : Colors.grey.shade400,
+                              ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _showPhotoOptions,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            LucideIcons.camera,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
 
               // Form fields
               _buildTextField(

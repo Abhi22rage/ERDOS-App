@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../models/user_model.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
 
@@ -35,7 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final infrastructure = [
       _QuickItem('Water Treatment Plants', LucideIcons.droplets,
-          '/schemes?center=Dispur WSS&asset=Water Treatment Plant'),
+          '/schemes?center=Dispur PWSS&asset=Water Treatment Plant'),
       _QuickItem('Boosting Stations', LucideIcons.wrench,
           '/assets?type=boosting_station'),
       _QuickItem('Pipe Lines', LucideIcons.activity, '/assets?type=pipeline'),
@@ -51,13 +53,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             top: -100,
             right: -80,
             child: _decorativeCircle(
-                280, AppColors.primary.withOpacity(isDarkMode ? 0.12 : 0.08)),
+                280, AppColors.primary.withValues(alpha: isDarkMode ? 0.12 : 0.08)),
           ),
           Positioned(
             bottom: 200,
             left: -100,
             child: _decorativeCircle(320,
-                AppColors.primaryLight.withOpacity(isDarkMode ? 0.08 : 0.05)),
+                AppColors.primaryLight.withValues(alpha: isDarkMode ? 0.08 : 0.05)),
           ),
 
           SafeArea(
@@ -240,7 +242,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // ─── UI Component Builders ───
 
-  Widget _buildProfileBadge(user, bool isDarkMode) {
+  Widget _buildProfileBadge(UserModel? user, bool isDarkMode) {
     return GestureDetector(
       onTap: () => context.push('/profile'),
       child: Stack(
@@ -252,23 +254,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              border: Border.all(
+                color: isDarkMode ? Colors.white10 : Colors.white,
+                width: 2,
               ),
+              gradient: user?.photoUrl == null
+                  ? LinearGradient(
+                      colors: [AppColors.primary, AppColors.primaryDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
             ),
-            child: Center(
-              child: Icon(
-                _getRoleIcon(user?.role),
-                color: Colors.white,
-                size: 24,
-              ),
+            child: ClipOval(
+              child: user?.photoUrl != null
+                  ? CachedNetworkImage(
+                      imageUrl: user!.photoUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: isDarkMode
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey.shade100,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Center(
+                        child: Icon(
+                          _getRoleIcon(user.role),
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        _getRoleIcon(user?.role),
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
             ),
           ),
           Positioned(
@@ -301,13 +335,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.white.withOpacity(0.08) : Colors.white,
+          color: isDarkMode ? Colors.white.withValues(alpha: 0.08) : Colors.white,
           shape: BoxShape.circle,
           border: Border.all(
-              color: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.white),
+              color: isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.white),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -355,7 +389,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFE53935).withOpacity(0.3),
+              color: const Color(0xFFE53935).withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -369,7 +403,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 right: -20,
                 bottom: -20,
                 child: Icon(LucideIcons.zap,
-                    size: 140, color: Colors.white.withOpacity(0.1)),
+                    size: 140, color: Colors.white.withValues(alpha: 0.1)),
               ),
               Padding(
                 padding: const EdgeInsets.all(24),
@@ -381,7 +415,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -406,7 +440,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       'Report infrastructure breakdown instantly',
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 13,
                           fontWeight: FontWeight.w500),
                     ),
@@ -444,15 +478,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onTap: () => context.push(card.route),
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.white.withOpacity(0.04) : Colors.white,
+          color: isDarkMode ? Colors.white.withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
               color: isDarkMode
-                  ? Colors.white.withOpacity(0.05)
+                  ? Colors.white.withValues(alpha: 0.05)
                   : Colors.transparent),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -464,7 +498,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: card.color.withOpacity(0.1),
+                color: card.color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(card.icon, size: 28, color: card.color),
@@ -476,7 +510,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: isDarkMode
-                    ? Colors.white.withOpacity(0.9)
+                    ? Colors.white.withValues(alpha: 0.9)
                     : AppColors.textPrimary,
               ),
             ),
@@ -493,15 +527,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.white.withOpacity(0.04) : Colors.white,
+          color: isDarkMode ? Colors.white.withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
               color: isDarkMode
-                  ? Colors.white.withOpacity(0.05)
+                  ? Colors.white.withValues(alpha: 0.05)
                   : Colors.transparent),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -512,7 +546,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(item.icon, size: 24, color: AppColors.primary),
@@ -525,7 +559,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: isDarkMode
-                      ? Colors.white.withOpacity(0.9)
+                      ? Colors.white.withValues(alpha: 0.9)
                       : AppColors.textPrimary,
                 ),
               ),
@@ -596,11 +630,11 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+          color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -611,7 +645,7 @@ class _StatCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 16, color: color),

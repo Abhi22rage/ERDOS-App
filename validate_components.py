@@ -1,6 +1,6 @@
 import re
 
-file_path = r'd:\phe_flutter\lib\core\constants\dispur_wss_components.dart'
+file_path = r'd:\phe_flutter\lib\core\constants\dispur_pwss_components.dart'
 
 with open(file_path, 'r', encoding='utf-8') as f:
     lines = f.readlines()

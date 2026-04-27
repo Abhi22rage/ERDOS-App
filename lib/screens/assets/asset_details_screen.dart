@@ -34,32 +34,41 @@ class AssetDetailsScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(LucideIcons.box, size: 48, color: AppColors.primary),
+                              child: const Icon(LucideIcons.box,
+                                  size: 48, color: AppColors.primary),
                             ),
                             const SizedBox(height: 24),
                             Text(
                               id,
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                              style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5),
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 6),
                               decoration: BoxDecoration(
-                                color: AppColors.warning.withOpacity(0.1),
+                                color: AppColors.warning.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Text(
                                 'UNDER DEVELOPMENT',
-                                style: TextStyle(color: AppColors.warning, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1),
+                                style: TextStyle(
+                                    color: AppColors.warning,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 10,
+                                    letterSpacing: 1),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
                       const FluentSectionHeader(title: 'Asset Specifications'),
                       const SizedBox(height: 16),
@@ -69,13 +78,17 @@ class AssetDetailsScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
-                            _buildSpecRow('TYPE', 'PRODUCTION ASSET', isDarkMode),
+                            _buildSpecRow(
+                                'TYPE', 'PRODUCTION ASSET', isDarkMode),
                             const Divider(height: 32),
-                            _buildSpecRow('STATUS', 'ACTIVE', isDarkMode, color: AppColors.success),
+                            _buildSpecRow('STATUS', 'ACTIVE', isDarkMode,
+                                color: AppColors.success),
                             const Divider(height: 32),
-                            _buildSpecRow('LOCATION', 'DISPUR WSS AREA', isDarkMode),
+                            _buildSpecRow(
+                                'LOCATION', 'DISPUR PWSS AREA', isDarkMode),
                             const Divider(height: 32),
-                            _buildSpecRow('INSTALLED', '12 OCT 2024', isDarkMode),
+                            _buildSpecRow(
+                                'INSTALLED', '12 OCT 2024', isDarkMode),
                           ],
                         ),
                       ),
@@ -85,7 +98,12 @@ class AssetDetailsScreen extends StatelessWidget {
                       Text(
                         'This asset module is currently being integrated into the live monitoring system.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, color: isDarkMode ? Colors.white24 : AppColors.textSecondary, height: 1.5),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: isDarkMode
+                                ? Colors.white24
+                                : AppColors.textSecondary,
+                            height: 1.5),
                       ),
                       const SizedBox(height: 32),
                       SizedBox(
@@ -93,10 +111,15 @@ class AssetDetailsScreen extends StatelessWidget {
                         child: TextButton.icon(
                           onPressed: () => context.pop(),
                           icon: const Icon(LucideIcons.chevronLeft, size: 18),
-                          label: const Text('BACK TO INVENTORY', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          label: const Text('BACK TO INVENTORY',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1)),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 20),
-                            foregroundColor: isDarkMode ? Colors.white70 : AppColors.textPrimary,
+                            foregroundColor: isDarkMode
+                                ? Colors.white70
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -111,12 +134,23 @@ class AssetDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSpecRow(String label, String value, bool isDarkMode, {Color? color}) {
+  Widget _buildSpecRow(String label, String value, bool isDarkMode,
+      {Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isDarkMode ? Colors.white24 : AppColors.textSecondary, letterSpacing: 0.5)),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color ?? (isDarkMode ? Colors.white : AppColors.textPrimary))),
+        Text(label,
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: isDarkMode ? Colors.white24 : AppColors.textSecondary,
+                letterSpacing: 0.5)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: color ??
+                    (isDarkMode ? Colors.white : AppColors.textPrimary))),
       ],
     );
   }

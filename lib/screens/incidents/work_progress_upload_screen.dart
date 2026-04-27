@@ -3,20 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/breakdown_model.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/gps_image_overlay.dart';
 
 // ── Work stages mapped to the incident's 7-step pipeline ─────────────────────
 const _workStages = [
   {'key': 'reported',         'label': 'Stage 1 – Site Inspection',  'desc': 'Initial site visit & damage assessment'},
   {'key': 'pending_approval', 'label': 'Stage 2 – Excavation',        'desc': 'Ground excavation & pipe exposure'},
-  {'key': 'approved',         'label': 'Stage 3 – Pipe Work',         'desc': 'Pipe replacement or repair work'},
-  {'key': 'assigned',         'label': 'Stage 4 – Repair Work',       'desc': 'Structural repair & fixing'},
-  {'key': 'in_progress',     'label': 'Stage 5 – Testing',            'desc': 'Pressure & quality testing'},
-  {'key': 'completed',       'label': 'Stage 6 – Restoration',        'desc': 'Site restoration & cleanup'},
-  {'key': 'closed',          'label': 'Stage 7 – Final Inspection',   'desc': 'Final sign-off & documentation'},
+  {'key': 'assigned',         'label': 'Stage 3 – Repair Work',       'desc': 'Structural repair & fixing'},
+  {'key': 'in_progress',     'label': 'Stage 4 – Testing',            'desc': 'Pressure & quality testing'},
+  {'key': 'completed',       'label': 'Stage 5 – Restoration',        'desc': 'Site restoration & cleanup'},
+  {'key': 'closed',          'label': 'Stage 6 – Final Inspection',   'desc': 'Final sign-off & documentation'},
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -117,23 +118,78 @@ class _WorkProgressUploadScreenState
         );
   }
 
-  Future<void> _handleDeleteMedia(RepairMediaModel media) async {
-    final confirmed = await _showDeleteConfirm();
-    if (!confirmed) return;
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
 
-    try {
-      await ref.read(apiServiceProvider).deleteRepairMedia(media.id, media.mediaUrl);
-      ref.invalidate(breakdownDetailProvider(widget.incidentId));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Media deleted successfully')),
-        );
+  Future<void> _handleDeleteMedia({
+    required String stageKey,
+    required int stageIdx,
+    required RepairMediaModel media,
+  }) async {
+    final breakdown = ref.read(breakdownDetailProvider(widget.incidentId)).value;
+    if (breakdown == null) return;
+
+    final currentIdx = breakdown.statusIndex;
+
+    // If deleting from a PREVIOUS stage, show warning and revert progress
+    if (stageIdx < currentIdx) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+          title: const Text('Revert Progress?'),
+          content: Text(
+            'Deleting media from an earlier stage will revert the incident status back to "${_workStages[stageIdx]['label']}".\n\n'
+            'WARNING: This will permanently delete ALL media uploaded in subsequent stages.',
+            style: TextStyle(
+              height: 1.5,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: isDark ? Colors.white54 : Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: const Text('Revert & Delete'),
+            ),
+          ],
+        ),
+      );
+
+      if (proceed != true) return;
+
+      try {
+        await ref.read(apiServiceProvider).revertIncidentToStage(
+              breakdownId: breakdown.id,
+              targetStatus: BreakdownModel.statusOrder[stageIdx],
+              deletedMediaId: media.id,
+              deletedMediaUrl: media.mediaUrl,
+            );
+        ref.invalidate(breakdownDetailProvider(widget.incidentId));
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete media: $e'), backgroundColor: AppColors.error),
-        );
+    } else {
+      // Normal deletion for current or future stages
+      try {
+        await ref
+            .read(apiServiceProvider)
+            .deleteRepairMedia(media.id, media.mediaUrl);
+        ref.invalidate(breakdownDetailProvider(widget.incidentId));
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
       }
     }
   }
@@ -154,6 +210,107 @@ class _WorkProgressUploadScreenState
         const SnackBar(content: Text('Preview removed')),
       );
     }
+  }
+
+  void _showFullMedia(BuildContext context, String url, bool isVideo, BreakdownModel breakdown) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close',
+      barrierColor: Colors.black.withValues(alpha: 0.8),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (ctx, anim1, anim2) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 120),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Media Container
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: isVideo 
+                      ? Container(
+                          width: double.infinity,
+                          height: 300,
+                          color: Colors.black26,
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(LucideIcons.playCircle, size: 80, color: Colors.white54),
+                                SizedBox(height: 16),
+                                Text('Video playback not implemented', style: TextStyle(color: Colors.white54)),
+                              ],
+                            ),
+                          ),
+                        )
+                      : GPSImageOverlay(
+                          imageUrl: url, 
+                          breakdown: breakdown, 
+                          isDarkMode: true,
+                          fit: BoxFit.contain,
+                        ),
+                  ),
+                ),
+              ),
+
+              // Close Button (Floating top-right)
+              Positioned(
+                top: -12,
+                right: -12,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: AppShadows.card,
+                    ),
+                    child: const Icon(LucideIcons.x, color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
+
+              // Hint text inside the dialog
+              Positioned(
+                bottom: 12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Pinch to zoom',
+                      style: TextStyle(color: Colors.white54, fontSize: 10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<bool> _showDeleteConfirm() async {
@@ -251,17 +408,23 @@ class _WorkProgressUploadScreenState
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: _StageCard(
-                stageLabel: label,
-                stageDesc: desc,
-                stageStatus: stageStatus,
-                stateData: state,
-                remoteMedia: remoteMedia,
-                isDark: isDark,
-                onUploadTap: () => _showUploadOptions(context, key, label),
-                onDeleteLocal: (url) => _handleDeleteLocalMedia(key, url),
-                onDeleteRemote: (m) => _handleDeleteMedia(m),
-              ),
+                child: _StageCard(
+                  stageLabel: label,
+                  stageDesc: desc,
+                  stageStatus: stageStatus,
+                  stateData: state,
+                  remoteMedia: remoteMedia,
+                  breakdown: breakdown,
+                  isDark: isDark,
+                  onUploadTap: () => _showUploadOptions(context, key, label),
+                  onDeleteLocal: (url) => _handleDeleteLocalMedia(key, url),
+                  onDeleteRemote: (m) => _handleDeleteMedia(
+                    stageKey: key,
+                    stageIdx: idx,
+                    media: m,
+                  ),
+                  onMediaTap: (url, isVideo) => _showFullMedia(context, url, isVideo, breakdown),
+                ),
             );
           }),
 
@@ -282,11 +445,10 @@ class _WorkProgressUploadScreenState
     const map = {
       'stage_1_site_inspection':  'damage_report',
       'stage_2_excavation':       'excavation',
-      'stage_3_pipe_work':        'pipe_exposed',
-      'stage_4_repair_work':      'repair_in_progress',
-      'stage_5_testing':          'repair_in_progress',
-      'stage_6_restoration':      'road_restoration',
-      'stage_7_final_inspection': 'inspection',
+      'stage_3_repair_work':      'repair_in_progress',
+      'stage_4_testing':          'completion',
+      'stage_5_restoration':      'road_restoration',
+      'stage_6_final_inspection': 'inspection',
     };
     return map[slug] ?? 'damage_report';
   }
@@ -329,31 +491,135 @@ class _WorkProgressUploadScreenState
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, -4))],
       ),
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
-      child: SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Completion Certificate feature coming soon.'),
-                backgroundColor: AppColors.primary,
-                behavior: SnackBarBehavior.floating,
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final currentIdx = breakdown.statusIndex;
+                  if (currentIdx == -1) return;
+
+                  int targetIdx = currentIdx;
+
+                  // Scan forward to see how many stages are completed based on media presence
+                  for (int i = currentIdx; i < _workStages.length; i++) {
+                    final stage = _workStages[i];
+                    final key = stage['key']!;
+                    final label = stage['label']!;
+                    final stageEnum = _mapLabelToEnum(label);
+
+                    // Check if media exists for this stage
+                    final state = _stateFor(key);
+                    final hasLocal = state.localUrls.isNotEmpty;
+                    final hasRemote = breakdown.repairMedia.any((m) => m.stage == stageEnum);
+
+                    if (hasLocal || hasRemote) {
+                      targetIdx = i + 1; // Completed this stage, move target to next status
+                    } else {
+                      break; // Missing media, cannot progress further
+                    }
+                  }
+
+                  if (targetIdx == currentIdx) {
+                    final label = _workStages[currentIdx]['label']!;
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please upload media for $label before saving.'),
+                          backgroundColor: AppColors.error,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+
+                  if (targetIdx < BreakdownModel.statusOrder.length) {
+                    final nextStatus = BreakdownModel.statusOrder[targetIdx];
+                    try {
+                      await ref.read(apiServiceProvider).updateBreakdownStatus(breakdown.id, nextStatus);
+                      ref.invalidate(breakdownDetailProvider(breakdown.id));
+                      
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Progress saved! Current Status: ${nextStatus.replaceAll('_', ' ').toUpperCase()}'),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to save progress: $e'), backgroundColor: AppColors.error),
+                        );
+                      }
+                    }
+                  } else if (currentIdx >= _workStages.length) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('All work stages are already completed.')),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(LucideIcons.save, size: 20),
+                label: const Text(
+                  'Save Changes',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.2),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? Colors.white10 : Colors.grey.shade100,
+                  foregroundColor: isDark ? Colors.white : AppColors.textPrimary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: isDark ? Colors.white10 : Colors.grey.shade300,
+                    ),
+                  ),
+                ),
               ),
-            );
-          },
-          icon: const Icon(LucideIcons.fileCheck, size: 20),
-          label: const Text(
-            'Apply Completion Certificate',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.2),
+            ),
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SizedBox(
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: breakdown.statusIndex == 6
+                    ? () {
+                        if (breakdown.status == 'certified') {
+                          context.push('/certificate-report/${breakdown.id}');
+                        } else {
+                          context.push('/apply-certificate/${breakdown.id}');
+                        }
+                      }
+                    : null,
+                icon: Icon(breakdown.status == 'certified' ? LucideIcons.fileCheck : LucideIcons.fileSignature, size: 20),
+                label: Text(
+                  breakdown.status == 'certified' ? 'View Certificate' : 'Apply Certificate',
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.2),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor:
+                      isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
+                  disabledForegroundColor:
+                      isDark ? Colors.white24 : Colors.grey.shade400,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -370,7 +636,8 @@ class _CurrentStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = AppColors.statusColor(breakdown.status);
-    final progress = (breakdown.statusIndex + 1) / 7.0;
+    final statusIdx = breakdown.statusIndex;
+    final progress = statusIdx == -1 ? 0.0 : statusIdx / 6.0;
     final cardBg = isDark ? const Color(0xFF1E1E2E) : Colors.white;
 
     return Container(
@@ -385,26 +652,47 @@ class _CurrentStatusCard extends StatelessWidget {
         children: [
           // Header row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Current Status',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white38 : AppColors.textSecondary,
-                        letterSpacing: 0.8,
+                    SelectableText(
+                      breakdown.displayId,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       breakdown.title,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 18, 
+                        fontWeight: FontWeight.w900, 
+                        letterSpacing: -0.4,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(LucideIcons.clock, size: 12, color: isDark ? Colors.white38 : AppColors.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          DateFormat('dd MMM yyyy · hh:mm a').format(breakdown.createdAt),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white38 : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -426,25 +714,6 @@ class _CurrentStatusCard extends StatelessWidget {
                     letterSpacing: 0.6,
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // Meta info row
-          Row(
-            children: [
-              _MetaPill(
-                icon: LucideIcons.hash,
-                label: breakdown.displayId,
-                isDark: isDark,
-              ),
-              const SizedBox(width: 8),
-              _MetaPill(
-                icon: LucideIcons.clock,
-                label: DateFormat('dd MMM yy · HH:mm').format(breakdown.createdAt),
-                isDark: isDark,
               ),
             ],
           ),
@@ -503,38 +772,6 @@ class _CurrentStatusCard extends StatelessWidget {
   }
 }
 
-class _MetaPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isDark;
-  const _MetaPill({required this.icon, required this.label, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: isDark ? Colors.white38 : AppColors.textSecondary),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white54 : AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Stage Card
@@ -545,21 +782,25 @@ class _StageCard extends StatelessWidget {
   final String stageStatus; // 'complete' | 'in_progress' | 'pending'
   final _StageState stateData;
   final List<RepairMediaModel> remoteMedia;
+  final BreakdownModel breakdown;
   final bool isDark;
   final VoidCallback onUploadTap;
   final Function(String) onDeleteLocal;
   final Function(RepairMediaModel) onDeleteRemote;
+  final Function(String, bool) onMediaTap;
 
-  _StageCard({
+  const _StageCard({
     required this.stageLabel,
     required this.stageDesc,
     required this.stageStatus,
     required this.stateData,
     required this.remoteMedia,
+    required this.breakdown,
     required this.isDark,
     required this.onUploadTap,
     required this.onDeleteLocal,
     required this.onDeleteRemote,
+    required this.onMediaTap,
   });
 
   Color get _statusColor {
@@ -641,9 +882,11 @@ class _StageCard extends StatelessWidget {
           _MediaPreviewArea(
             localUrls: stateData.localUrls,
             remoteMedia: remoteMedia,
+            breakdown: breakdown,
             isDark: isDark,
             onDeleteLocal: onDeleteLocal,
             onDeleteRemote: onDeleteRemote,
+            onMediaTap: onMediaTap,
           ),
 
           // ── Upload Progress Bar (when uploading) ──────────────────────────
@@ -676,26 +919,32 @@ class _StageCard extends StatelessWidget {
 class _MediaPreviewArea extends StatelessWidget {
   final List<String> localUrls;
   final List<RepairMediaModel> remoteMedia;
+  final BreakdownModel breakdown;
   final bool isDark;
   final Function(String) onDeleteLocal;
   final Function(RepairMediaModel) onDeleteRemote;
+  final Function(String, bool) onMediaTap;
 
-  _MediaPreviewArea({
+  const _MediaPreviewArea({
     required this.localUrls,
     required this.remoteMedia,
+    required this.breakdown,
     required this.isDark,
     required this.onDeleteLocal,
     required this.onDeleteRemote,
+    required this.onMediaTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final bgColor = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade100;
 
-    // Combine local and remote for the list
-    final List<({String url, RepairMediaModel? model, bool isLocal})> items = [
-      ...localUrls.map((u) => (url: u, model: null as RepairMediaModel?, isLocal: true)),
-      ...remoteMedia.map((m) => (url: m.mediaUrl, model: m as RepairMediaModel?, isLocal: false)),
+    final remoteUrls = remoteMedia.map((m) => m.mediaUrl).toSet();
+    final List<({String url, RepairMediaModel? model, bool isLocal, String status})> items = [
+      ...localUrls
+          .where((u) => !remoteUrls.contains(u))
+          .map((u) => (url: u, model: null as RepairMediaModel?, isLocal: true, status: 'pending')),
+      ...remoteMedia.map((m) => (url: m.mediaUrl, model: m as RepairMediaModel?, isLocal: false, status: m.status)),
     ];
 
     if (items.isEmpty) {
@@ -744,31 +993,33 @@ class _MediaPreviewArea extends StatelessWidget {
           final isNetwork = url.startsWith('http') || url.startsWith('blob');
           final isVideo = url.toLowerCase().contains('.mp4') || url.toLowerCase().contains('.mov');
           
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              children: [
-                isNetwork
-                    ? Image.network(
-                        url,
-                        width: 240,
-                        height: 160,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 240, height: 160, color: bgColor,
-                          child: const Icon(LucideIcons.image, color: Colors.white24, size: 30),
+          return GestureDetector(
+            onTap: () => onMediaTap(url, isVideo),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  isNetwork
+                      ? Image.network(
+                          url,
+                          width: 240,
+                          height: 160,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 240, height: 160, color: bgColor,
+                            child: const Icon(LucideIcons.image, color: Colors.white24, size: 30),
+                          ),
+                        )
+                      : Image.network(
+                          url,
+                          width: 240,
+                          height: 160,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 240, height: 160, color: bgColor,
+                            child: const Icon(LucideIcons.image, color: AppColors.primary, size: 30),
+                          ),
                         ),
-                      )
-                    : Image.network(
-                        url,
-                        width: 240,
-                        height: 160,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 240, height: 160, color: bgColor,
-                          child: const Icon(LucideIcons.image, color: AppColors.primary, size: 30),
-                        ),
-                      ),
                 
                 // Play overlay for videos
                 if (isVideo)
@@ -804,9 +1055,51 @@ class _MediaPreviewArea extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                // STATUS BADGE
+                Positioned(
+                  bottom: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: item.status == 'approved' 
+                          ? Colors.green.withValues(alpha: 0.8) 
+                          : item.status == 'rejected' 
+                              ? Colors.red.withValues(alpha: 0.8) 
+                              : Colors.orange.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          item.status == 'approved' 
+                              ? LucideIcons.checkCircle2 
+                              : item.status == 'rejected' 
+                                  ? LucideIcons.xCircle 
+                                  : LucideIcons.clock,
+                          color: Colors.white,
+                          size: 10,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.status.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );
@@ -862,7 +1155,7 @@ class _UploadButton extends StatelessWidget {
   final bool uploading;
   final bool isDark;
   final VoidCallback? onTap;
-  _UploadButton({required this.uploading, required this.isDark, required this.onTap});
+  const _UploadButton({required this.uploading, required this.isDark, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

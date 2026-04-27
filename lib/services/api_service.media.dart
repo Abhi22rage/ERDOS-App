@@ -8,12 +8,78 @@ mixin _MediaMixin {
   static const _stageEnumMap = {
     'stage_1_site_inspection':  'damage_report',
     'stage_2_excavation':       'excavation',
-    'stage_3_pipe_work':        'pipe_exposed',
-    'stage_4_repair_work':      'repair_in_progress',
-    'stage_5_testing':          'repair_in_progress',
-    'stage_6_restoration':      'road_restoration',
-    'stage_7_final_inspection': 'inspection',
+    'stage_3_repair_work':      'repair_in_progress',
+    'stage_4_testing':          'completion',
+    'stage_5_restoration':      'road_restoration',
+    'stage_6_final_inspection': 'inspection',
   };
+
+  static const List<String> _mediaStageOrder = [
+    'damage_report',
+    'excavation',
+    'repair_in_progress',
+    'completion',
+    'road_restoration',
+    'inspection',
+  ];
+
+  /// Reverts incident progress to a specific stage and clears all media from subsequent stages.
+  Future<void> revertIncidentToStage({
+    required String breakdownId,
+    required String targetStatus,
+    required String deletedMediaId,
+    required String deletedMediaUrl,
+  }) async {
+    // 1. Delete the triggering media first
+    await deleteRepairMedia(deletedMediaId, deletedMediaUrl);
+
+    final statusIdx = BreakdownModel.statusOrder.indexOf(targetStatus);
+    if (statusIdx == -1) return;
+
+    // 2. Identify all subsequent stages to clear
+    final List<String> stagesToClear = [];
+    for (int i = statusIdx + 1; i < _mediaStageOrder.length; i++) {
+      final stage = _mediaStageOrder[i];
+      if (!stagesToClear.contains(stage)) {
+        stagesToClear.add(stage);
+      }
+    }
+
+    // 3. Delete media for those stages
+    if (breakdownId.startsWith('mock-')) {
+      final localIdx = ApiService.localIncidents.indexWhere((i) => i.id == breakdownId);
+      if (localIdx != -1) {
+        final incident = ApiService.localIncidents[localIdx];
+        final filteredMedia = incident.repairMedia
+            .where((m) => !stagesToClear.contains(m.stage))
+            .toList();
+        ApiService.localIncidents[localIdx] =
+            incident.copyWith(
+              repairMedia: filteredMedia,
+              status: targetStatus,
+            );
+      }
+    } else {
+      try {
+        // Fetch all media and filter in Dart to avoid 'IN' clause issues
+        final List<dynamic> data = await _client
+            .from('repair_media')
+            .select('id, media_url, stage')
+            .eq('breakdown_id', breakdownId);
+
+        for (final m in data) {
+          if (stagesToClear.contains(m['stage'])) {
+            await deleteRepairMedia(m['id']?.toString() ?? '', m['media_url'] ?? '');
+          }
+        }
+        
+        // 4. Update status back to the target stage
+        await (this as ApiService).updateBreakdownStatus(breakdownId, targetStatus);
+      } catch (e) {
+        debugPrint('Cascade deletion failed: $e');
+      }
+    }
+  }
 
   // ── Legacy: kept for backward compatibility ───────────────────────────────
   Future<String> uploadMedia(File file, String breakdownId) async {
@@ -29,10 +95,6 @@ mixin _MediaMixin {
   }
 
   // ── UUID validator ────────────────────────────────────────────────────────
-  static final _uuidRegex = RegExp(
-    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', // Simpler check for now if needed, but standard is better
-    caseSensitive: false,
-  );
   // Re-corrected standard UUID regex
   static final _strictUuidRegex = RegExp(
     r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
@@ -113,6 +175,22 @@ mixin _MediaMixin {
             'captured_at': DateTime.now().toIso8601String(),
             if (userId != null) 'uploaded_by': userId,
           });
+        } else {
+          // Sync with local incidents for mock data persistence during the session
+          final idx = ApiService.localIncidents.indexWhere((i) => i.id == breakdownId);
+          if (idx != -1) {
+            final current = ApiService.localIncidents[idx];
+            final newMedia = RepairMediaModel(
+              id: 'local-${DateTime.now().millisecondsSinceEpoch}-$i',
+              stage: stageEnum,
+              mediaUrl: publicUrl,
+              mediaType: isVideo ? 'video' : 'photo',
+              capturedAt: DateTime.now(),
+            );
+            ApiService.localIncidents[idx] = current.copyWith(
+              repairMedia: [...current.repairMedia, newMedia],
+            );
+          }
         }
         
         onProgress(i + 1, files.length);
@@ -143,6 +221,21 @@ mixin _MediaMixin {
 
   Future<void> deleteRepairMedia(String mediaId, String mediaUrl) async {
     try {
+      // Handle local mock media deletion
+      if (mediaId.startsWith('local-')) {
+        for (var i = 0; i < ApiService.localIncidents.length; i++) {
+          final incident = ApiService.localIncidents[i];
+          final updatedMedia =
+              incident.repairMedia.where((m) => m.id != mediaId).toList();
+          if (updatedMedia.length != incident.repairMedia.length) {
+            ApiService.localIncidents[i] =
+                incident.copyWith(repairMedia: updatedMedia);
+            return;
+          }
+        }
+        return;
+      }
+
       // 1. Delete DB record
       await _client.from('repair_media').delete().match({'id': mediaId});
 
@@ -153,7 +246,7 @@ mixin _MediaMixin {
       }
     } catch (e) {
       debugPrint('Error deleting repair media: $e');
-      throw e;
+      throw 'Failed to delete media from database. This is usually due to permission restrictions.';
     }
   }
 

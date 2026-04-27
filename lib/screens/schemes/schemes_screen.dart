@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../theme/app_theme.dart';
-import '../../core/constants/dispur_wss_components.dart';
+import '../../core/constants/dispur_pwss_components.dart';
 import '../../widgets/fluent_ui.dart';
 
 class SchemesScreen extends ConsumerStatefulWidget {
@@ -44,23 +44,41 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
   }
 
   // Hierarchical Data Logic (Unchanged)
-  final List<String> _centers = ['Dispur WSS', 'GU & AEC WSS', 'Sarusajai WSS'];
-  List<String> get _assets => _selectedCenter == 'Dispur WSS' 
-      ? ['Intake (Barge)', 'Water Treatment Plant', 'Boosting Stations', 'Pipelines']
+  final List<String> _centers = [
+    'Dispur PWSS',
+    'GU & AEC PWSS',
+    'Sarusajai PWSS'
+  ];
+  List<String> get _assets => _selectedCenter == 'Dispur PWSS'
+      ? [
+          'Intake (Barge)',
+          'Water Treatment Plant',
+          'Boosting Stations',
+          'Pipelines'
+        ]
       : ['Boosting Stations', 'Pipelines'];
 
-  List<String> get _categories => (_selectedCenter == 'Dispur WSS' && (_selectedAsset == 'Intake (Barge)' || _selectedAsset == 'Water Treatment Plant'))
-      ? wtpComponentCategories : ['Electrical', 'Mechanical', 'Civil', 'Consumables'];
+  List<String> get _categories => (_selectedCenter == 'Dispur PWSS' &&
+          (_selectedAsset == 'Intake (Barge)' ||
+              _selectedAsset == 'Water Treatment Plant'))
+      ? wtpComponentCategories
+      : ['Electrical', 'Mechanical', 'Civil', 'Consumables'];
 
   List<String> get _types {
     if (_selectedCategory == null) return [];
-    if (_selectedCenter == 'Dispur WSS' && (_selectedAsset == 'Intake (Barge)' || _selectedAsset == 'Water Treatment Plant')) {
+    if (_selectedCenter == 'Dispur PWSS' &&
+        (_selectedAsset == 'Intake (Barge)' ||
+            _selectedAsset == 'Water Treatment Plant')) {
       final Set<String> uniqueNames = {};
       for (var comp in groupedWtpComponents[_selectedCategory]!) {
         bool matchesLoc = true;
-        if (_selectedAsset == 'Intake (Barge)' && !comp.locationUsage.toLowerCase().contains('barge')) {
+        if (_selectedAsset == 'Intake (Barge)' &&
+            !comp.locationUsage.toLowerCase().contains('barge')) {
           matchesLoc = false;
-        } else if (_selectedAsset == 'Water Treatment Plant' && !comp.locationUsage.toLowerCase().contains('treatment plant')) matchesLoc = false;
+        } else if (_selectedAsset == 'Water Treatment Plant' &&
+            !comp.locationUsage.toLowerCase().contains('treatment plant')) {
+          matchesLoc = false;
+        }
         if (matchesLoc || comp.locationUsage.isEmpty) {
           uniqueNames.add(comp.name);
         }
@@ -72,7 +90,9 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
 
   List<String> get _units {
     if (_selectedType == null) return [];
-    if (_selectedCenter == 'Dispur WSS' && (_selectedAsset == 'Intake (Barge)' || _selectedAsset == 'Water Treatment Plant')) {
+    if (_selectedCenter == 'Dispur PWSS' &&
+        (_selectedAsset == 'Intake (Barge)' ||
+            _selectedAsset == 'Water Treatment Plant')) {
       final matches = wtpComponents.where((c) {
         if (c.category != _selectedCategory) return false;
         return c.name == _selectedType;
@@ -81,13 +101,16 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
       final comp = matches.first;
       int quantity = int.tryParse(comp.quantity) ?? 0;
       if (quantity <= 1) return [];
-      return List.generate(quantity, (i) => '$_selectedType ${(i + 1).toString().padLeft(2, '0')}');
+      return List.generate(quantity,
+          (i) => '$_selectedType ${(i + 1).toString().padLeft(2, '0')}');
     }
     return ['Unit 01', 'Unit 02', 'Unit 03'];
   }
 
   WtpComponent? get _selectedComponentDetails {
-    if (_selectedCenter == 'Dispur WSS' && (_selectedAsset == 'Intake (Barge)' || _selectedAsset == 'Water Treatment Plant')) {
+    if (_selectedCenter == 'Dispur PWSS' &&
+        (_selectedAsset == 'Intake (Barge)' ||
+            _selectedAsset == 'Water Treatment Plant')) {
       final matches = wtpComponents.where((c) {
         if (c.category != _selectedCategory) return false;
         return c.name == _selectedType;
@@ -104,14 +127,24 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
           // If level 4 was skipped (no units), jump back to level 3 (Types)
           _currentLevel = 3;
           _selectedType = null;
-          _selectedUnit = null; 
+          _selectedUnit = null;
         } else {
           _currentLevel--;
-          if (_currentLevel == 0) _selectedCenter = null;
-          if (_currentLevel == 1) _selectedAsset = null;
-          if (_currentLevel == 2) _selectedCategory = null;
-          if (_currentLevel == 3) _selectedType = null;
-          if (_currentLevel == 4) _selectedUnit = null;
+          if (_currentLevel == 0) {
+            _selectedCenter = null;
+          }
+          if (_currentLevel == 1) {
+            _selectedAsset = null;
+          }
+          if (_currentLevel == 2) {
+            _selectedCategory = null;
+          }
+          if (_currentLevel == 3) {
+            _selectedType = null;
+          }
+          if (_currentLevel == 4) {
+            _selectedUnit = null;
+          }
         }
       });
     } else {
@@ -121,13 +154,20 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
 
   String get _title {
     switch (_currentLevel) {
-      case 0: return 'Production Centers';
-      case 1: return 'Assets';
-      case 2: return 'Categories';
-      case 3: return 'Component Types';
-      case 4: return 'Component Units';
-      case 5: return 'Component Details';
-      default: return 'Schemes';
+      case 0:
+        return 'Production Centers';
+      case 1:
+        return 'Assets';
+      case 2:
+        return 'Categories';
+      case 3:
+        return 'Component Types';
+      case 4:
+        return 'Component Units';
+      case 5:
+        return 'Component Details';
+      default:
+        return 'Schemes';
     }
   }
 
@@ -174,9 +214,12 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.white.withOpacity(0.03) : Colors.white,
+        color: isDarkMode ? Colors.white.withValues(alpha: 0.03) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.transparent),
+        border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.transparent),
       ),
       child: Text(
         breadcrumbs.join('  ›  '),
@@ -193,12 +236,23 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
   Widget _buildLevelContent(bool isDarkMode) {
     List<String> items = [];
     switch (_currentLevel) {
-      case 0: items = _centers; break;
-      case 1: items = _assets; break;
-      case 2: items = _categories; break;
-      case 3: items = _types; break;
-      case 4: items = _units; break;
-      case 5: return _buildDetailsView(isDarkMode);
+      case 0:
+        items = _centers;
+        break;
+      case 1:
+        items = _assets;
+        break;
+      case 2:
+        items = _categories;
+        break;
+      case 3:
+        items = _types;
+        break;
+      case 4:
+        items = _units;
+        break;
+      case 5:
+        return _buildDetailsView(isDarkMode);
     }
 
     if (items.isEmpty && _currentLevel == 4) {
@@ -217,11 +271,21 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
         return _buildSelectableCard(items[i], isDarkMode, () {
           setState(() {
             switch (_currentLevel) {
-              case 0: _selectedCenter = items[i]; break;
-              case 1: _selectedAsset = items[i]; break;
-              case 2: _selectedCategory = items[i]; break;
-              case 3: _selectedType = items[i]; break;
-              case 4: _selectedUnit = items[i]; break;
+              case 0:
+                _selectedCenter = items[i];
+                break;
+              case 1:
+                _selectedAsset = items[i];
+                break;
+              case 2:
+                _selectedCategory = items[i];
+                break;
+              case 3:
+                _selectedType = items[i];
+                break;
+              case 4:
+                _selectedUnit = items[i];
+                break;
             }
             _currentLevel++;
           });
@@ -230,7 +294,8 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
     );
   }
 
-  Widget _buildSelectableCard(String label, bool isDarkMode, VoidCallback onTap) {
+  Widget _buildSelectableCard(
+      String label, bool isDarkMode, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: FluentCard(
@@ -240,7 +305,7 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -260,7 +325,9 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
                 ),
               ),
             ),
-            Icon(LucideIcons.chevronRight, color: isDarkMode ? Colors.white10 : Colors.grey.shade300, size: 20),
+            Icon(LucideIcons.chevronRight,
+                color: isDarkMode ? Colors.white10 : Colors.grey.shade300,
+                size: 20),
           ],
         ),
       ),
@@ -277,33 +344,45 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoCard(isDarkMode, 'Component Profile', {
-            'Name': comp.name,
-            'Category': comp.category,
-            'Sl. No.': comp.slNo,
-            'Quantity': comp.quantity,
-          }, LucideIcons.info),
+          _buildInfoCard(
+              isDarkMode,
+              'Component Profile',
+              {
+                'Name': comp.name,
+                'Category': comp.category,
+                'Sl. No.': comp.slNo,
+                'Quantity': comp.quantity,
+              },
+              LucideIcons.info),
           const SizedBox(height: 16),
-          _buildInfoCard(isDarkMode, 'Operational Data', {
-            'Primary Location': comp.locationUsage,
-            'Main Purpose': comp.maintenancePurpose,
-          }, LucideIcons.activity),
+          _buildInfoCard(
+              isDarkMode,
+              'Operational Data',
+              {
+                'Primary Location': comp.locationUsage,
+                'Main Purpose': comp.maintenancePurpose,
+              },
+              LucideIcons.activity),
           const SizedBox(height: 32),
-          
+
           // Action Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () => context.push('/raise-issue'),
-              icon: const Icon(LucideIcons.alertTriangle, size: 18, color: Colors.white),
-              label: const Text('RAISE BREAKDOWN TICKET', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+              icon: const Icon(LucideIcons.alertTriangle,
+                  size: 18, color: Colors.white),
+              label: const Text('RAISE BREAKDOWN TICKET',
+                  style:
+                      TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE53935),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 elevation: 8,
-                shadowColor: Colors.red.withOpacity(0.4),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shadowColor: Colors.red.withValues(alpha: 0.4),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
               ),
             ),
           ),
@@ -313,7 +392,8 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
     );
   }
 
-  Widget _buildInfoCard(bool isDarkMode, String title, Map<String, String> details, IconData icon) {
+  Widget _buildInfoCard(bool isDarkMode, String title,
+      Map<String, String> details, IconData icon) {
     return FluentCard(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -325,26 +405,42 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
               const SizedBox(width: 10),
               Text(
                 title.toUpperCase(),
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1),
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                    letterSpacing: 1),
               ),
             ],
           ),
           const SizedBox(height: 20),
           ...details.entries.map((e) => Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 100,
-                  child: Text(e.key, style: TextStyle(fontSize: 12, color: isDarkMode ? Colors.white38 : AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      child: Text(e.key,
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: isDarkMode
+                                  ? Colors.white38
+                                  : AppColors.textSecondary,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                    Expanded(
+                      child: Text(e.value.isEmpty ? '—' : e.value,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                              fontWeight: FontWeight.w800)),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Text(e.value.isEmpty ? '—' : e.value, style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w800)),
-                ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
@@ -355,11 +451,16 @@ class _SchemesScreenState extends ConsumerState<SchemesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.searchX, size: 64, color: isDarkMode ? Colors.white10 : Colors.grey.shade200),
+          Icon(LucideIcons.searchX,
+              size: 64,
+              color: isDarkMode ? Colors.white10 : Colors.grey.shade200),
           const SizedBox(height: 24),
-          const Text('Data not available', style: TextStyle(fontWeight: FontWeight.w900)),
+          const Text('Data not available',
+              style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 16),
-          TextButton(onPressed: () => setState(() => _currentLevel = 0), child: const Text('Reset Navigation')),
+          TextButton(
+              onPressed: () => setState(() => _currentLevel = 0),
+              child: const Text('Reset Navigation')),
         ],
       ),
     );

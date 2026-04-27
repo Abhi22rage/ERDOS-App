@@ -94,8 +94,18 @@ class BreakdownModel {
   String get displayId =>
       reportNumber ?? 'INC-${id.length > 8 ? id.substring(0, 8) : id}';
 
-  String get normalizedStatus =>
-      status == 'auto_approved' ? 'approved' : status;
+  String get normalizedStatus {
+    if (status == 'auto_approved' || status == 'approved') {
+      return 'approved';
+    }
+    if (status == 'contractor_assigned') {
+      return 'assigned';
+    }
+    if (status == 'certified') {
+      return 'closed';
+    }
+    return status;
+  }
 
   static const List<String> statusOrder = [
     'reported',
@@ -108,6 +118,58 @@ class BreakdownModel {
   ];
 
   int get statusIndex => statusOrder.indexOf(normalizedStatus);
+
+  BreakdownModel copyWith({
+    String? id,
+    String? reportNumber,
+    String? title,
+    String? description,
+    String? status,
+    String? severity,
+    String? assetType,
+    String? assetName,
+    String? assetId,
+    String? componentCategory,
+    String? componentType,
+    String? componentUnit,
+    double? locationLat,
+    double? locationLng,
+    String? locationAddress,
+    String? reportedBy,
+    String? reporterName,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<WorkStageModel>? workStages,
+    List<ApprovalModel>? approvals,
+    List<String>? mediaUrls,
+    List<RepairMediaModel>? repairMedia,
+  }) {
+    return BreakdownModel(
+      id: id ?? this.id,
+      reportNumber: reportNumber ?? this.reportNumber,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      severity: severity ?? this.severity,
+      assetType: assetType ?? this.assetType,
+      assetName: assetName ?? this.assetName,
+      assetId: assetId ?? this.assetId,
+      componentCategory: componentCategory ?? this.componentCategory,
+      componentType: componentType ?? this.componentType,
+      componentUnit: componentUnit ?? this.componentUnit,
+      locationLat: locationLat ?? this.locationLat,
+      locationLng: locationLng ?? this.locationLng,
+      locationAddress: locationAddress ?? this.locationAddress,
+      reportedBy: reportedBy ?? this.reportedBy,
+      reporterName: reporterName ?? this.reporterName,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      workStages: workStages ?? this.workStages,
+      approvals: approvals ?? this.approvals,
+      mediaUrls: mediaUrls ?? this.mediaUrls,
+      repairMedia: repairMedia ?? this.repairMedia,
+    );
+  }
 }
 
 class RepairMediaModel {
@@ -115,6 +177,7 @@ class RepairMediaModel {
   final String stage;
   final String mediaUrl;
   final String mediaType;
+  final String status;
   final DateTime? capturedAt;
 
   RepairMediaModel({
@@ -122,6 +185,7 @@ class RepairMediaModel {
     required this.stage,
     required this.mediaUrl,
     required this.mediaType,
+    this.status = 'pending',
     this.capturedAt,
   });
 
@@ -131,6 +195,7 @@ class RepairMediaModel {
       stage: json['stage'] ?? '',
       mediaUrl: json['media_url'] ?? '',
       mediaType: json['media_type'] ?? 'photo',
+      status: json['status'] ?? 'pending',
       capturedAt: json['captured_at'] != null
           ? DateTime.tryParse(json['captured_at'])
           : null,

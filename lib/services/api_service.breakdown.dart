@@ -10,25 +10,7 @@ mixin _BreakdownMixin on _AuthMixin {
       final localIdx = ApiService.localIncidents.indexWhere((i) => i.id == id);
       if (localIdx != -1) {
         final current = ApiService.localIncidents[localIdx];
-        ApiService.localIncidents[localIdx] = BreakdownModel(
-          id: current.id,
-          reportNumber: current.reportNumber,
-          title: current.title,
-          description: current.description,
-          status: newStatus,
-          severity: current.severity,
-          assetName: current.assetName,
-          assetId: current.assetId,
-          componentCategory: current.componentCategory,
-          componentType: current.componentType,
-          componentUnit: current.componentUnit,
-          locationLat: current.locationLat,
-          locationLng: current.locationLng,
-          locationAddress: current.locationAddress,
-          mediaUrls: current.mediaUrls,
-          reportedBy: current.reportedBy,
-          createdAt: current.createdAt,
-        );
+        ApiService.localIncidents[localIdx] = current.copyWith(status: newStatus);
         return;
       }
 
@@ -36,33 +18,11 @@ mixin _BreakdownMixin on _AuthMixin {
           .from('breakdown_reports')
           .update({'status': newStatus}).eq('id', id);
     } catch (e) {
-      debugPrint('Update status error: $e. Falling back to local mock addition.');
-      final current = await getBreakdownById(id);
-      final updated = BreakdownModel(
-          id: current.id,
-          reportNumber: current.reportNumber,
-          title: current.title,
-          description: current.description,
-          status: newStatus,
-          severity: current.severity,
-          assetName: current.assetName,
-          assetId: current.assetId,
-          componentCategory: current.componentCategory,
-          componentType: current.componentType,
-          componentUnit: current.componentUnit,
-          locationLat: current.locationLat,
-          locationLng: current.locationLng,
-          locationAddress: current.locationAddress,
-          mediaUrls: current.mediaUrls,
-          reportedBy: current.reportedBy,
-          createdAt: current.createdAt,
-      );
-      
+      debugPrint('Update status error: $e. Attempting local sync.');
       final localIdx = ApiService.localIncidents.indexWhere((i) => i.id == id);
       if (localIdx != -1) {
-          ApiService.localIncidents[localIdx] = updated;
-      } else {
-          ApiService.localIncidents.add(updated);
+        final current = ApiService.localIncidents[localIdx];
+        ApiService.localIncidents[localIdx] = current.copyWith(status: newStatus);
       }
     }
   }
@@ -97,11 +57,13 @@ mixin _BreakdownMixin on _AuthMixin {
             repair_media(*)
           ''').eq('reported_by', userId).order('created_at', ascending: false);
 
-      final dbItems = data.map((j) => BreakdownModel.fromJson(j)).toList();
+      final List<BreakdownModel> dbItems =
+          data.map((j) => BreakdownModel.fromJson(j)).toList();
 
       final existingIds = dbItems.map((e) => e.id).toSet();
-      final merged = [
-        ...ApiService.localIncidents.where((item) => !existingIds.contains(item.id)),
+      final List<BreakdownModel> merged = [
+        ...ApiService.localIncidents
+            .where((item) => !existingIds.contains(item.id)),
         ...dbItems,
       ];
 
@@ -118,8 +80,8 @@ mixin _BreakdownMixin on _AuthMixin {
     return [
       BreakdownModel(
         id: 'mock-1',
-        reportNumber: 'INC-DWSS-MC-9321',
-        title: 'Dispur WSS - Pumpset 80 HP Fault',
+        reportNumber: 'INC-DPWSS-MC-9321',
+        title: 'Dispur PWSS - Pumpset 80 HP Fault',
         status: 'reported',
         severity: 'high',
         assetName: 'Panbazar Barge',
@@ -145,8 +107,8 @@ mixin _BreakdownMixin on _AuthMixin {
     } catch (e) {
       return BreakdownModel(
         id: id,
-        reportNumber: 'INC-DWSS-MC-9321',
-        title: 'Dispur WSS - Pumpset 80 HP Fault',
+        reportNumber: 'INC-DPWSS-MC-9321',
+        title: 'Dispur PWSS - Pumpset 80 HP Fault',
         description:
             'Heavy vibration noted during operation. Suction pressure dropping below 0.5 bar. Requires immediate mechanical check.',
         status: 'reported',

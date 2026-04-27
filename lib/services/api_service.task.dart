@@ -15,7 +15,6 @@ mixin _TaskMixin {
           .limit(10);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      print('TASKS ERROR: $e');
       return [];
     }
   }

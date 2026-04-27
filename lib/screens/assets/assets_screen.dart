@@ -61,7 +61,7 @@ class AssetsScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(isDarkMode ? 0.08 : 0.05),
+              color: AppColors.primary.withValues(alpha: isDarkMode ? 0.08 : 0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -139,7 +139,7 @@ class _AssetCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(

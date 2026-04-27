@@ -103,9 +103,9 @@ class _ContractorsScreenState extends ConsumerState<ContractorsScreen> {
                         height: 48,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+                          color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.1) : AppColors.primary.withOpacity(0.2)),
+                          border: Border.all(color: isDarkMode ? Colors.white.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.2)),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
@@ -185,7 +185,7 @@ class _ContractorCard extends StatelessWidget {
                   height: 54,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.primary.withOpacity(0.2), AppColors.primary.withOpacity(0.05)],
+                      colors: [AppColors.primary.withValues(alpha: 0.2), AppColors.primary.withValues(alpha: 0.05)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -230,9 +230,9 @@ class _ContractorCard extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 18),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDarkMode ? Colors.white.withOpacity(0.03) : const Color(0xFFF9FAFF),
+              color: isDarkMode ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF9FAFF),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.transparent),
+              border: Border.all(color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.transparent),
             ),
             child: Column(
               children: [
@@ -255,9 +255,9 @@ class _ContractorCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+                        color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                       ),
                       child: const Center(
                         child: Text(
@@ -280,7 +280,7 @@ class _ContractorCard extends StatelessWidget {
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: const Center(

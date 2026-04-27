@@ -209,7 +209,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               elevation: 8,
-                              shadowColor: AppColors.primary.withOpacity(0.4),
+                              shadowColor: AppColors.primary.withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -283,7 +283,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(LucideIcons.droplets,
@@ -307,11 +307,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 40),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+        color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -347,7 +347,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 borderRadius: BorderRadius.circular(26),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -395,12 +395,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         Container(
           decoration: BoxDecoration(
             color: isDarkMode
-                ? Colors.white.withOpacity(0.05)
+                ? Colors.white.withValues(alpha: 0.05)
                 : const Color(0xFFF0F3F9),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
                 color: isDarkMode
-                    ? Colors.white.withOpacity(0.1)
+                    ? Colors.white.withValues(alpha: 0.1)
                     : Colors.transparent),
           ),
           child: TextField(
@@ -418,7 +418,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   size: 16,
                   color: isDarkMode
                       ? Colors.white38
-                      : AppColors.primary.withOpacity(0.6)),
+                      : AppColors.primary.withValues(alpha: 0.6)),
               suffixIcon: suffix,
               counterText: '',
               border: InputBorder.none,
@@ -448,12 +448,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         Container(
           decoration: BoxDecoration(
             color: isDarkMode
-                ? Colors.white.withOpacity(0.05)
+                ? Colors.white.withValues(alpha: 0.05)
                 : const Color(0xFFF0F3F9),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
                 color: isDarkMode
-                    ? Colors.white.withOpacity(0.1)
+                    ? Colors.white.withValues(alpha: 0.1)
                     : Colors.transparent),
           ),
           child: DropdownButtonFormField<String>(
@@ -469,7 +469,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   size: 16,
                   color: isDarkMode
                       ? Colors.white38
-                      : AppColors.primary.withOpacity(0.6)),
+                      : AppColors.primary.withValues(alpha: 0.6)),
               border: InputBorder.none,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

@@ -93,11 +93,11 @@ class _MyTasksScreenState extends ConsumerState<MyTasksScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+              color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -114,7 +114,7 @@ class _MyTasksScreenState extends ConsumerState<MyTasksScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
+                color: AppColors.primary.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -156,17 +156,17 @@ class _MyTasksScreenState extends ConsumerState<MyTasksScreen> {
                 gradient: isActive 
                     ? LinearGradient(colors: [AppColors.primary, AppColors.primaryDark])
                     : null,
-                color: !isActive ? (isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white) : null,
+                color: !isActive ? (isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.white) : null,
                 borderRadius: BorderRadius.circular(22),
                 boxShadow: isActive ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
                 ] : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   )
@@ -195,10 +195,10 @@ class _MyTasksScreenState extends ConsumerState<MyTasksScreen> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
-            child: Icon(LucideIcons.clipboardCheck, size: 64, color: isDarkMode ? Colors.white10 : AppColors.primary.withOpacity(0.1)),
+            child: Icon(LucideIcons.clipboardCheck, size: 64, color: isDarkMode ? Colors.white10 : AppColors.primary.withValues(alpha: 0.1)),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -268,8 +268,8 @@ class _IncidentCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.08),
-                border: Border(bottom: BorderSide(color: statusColor.withOpacity(0.1))),
+                color: statusColor.withValues(alpha: 0.08),
+                border: Border(bottom: BorderSide(color: statusColor.withValues(alpha: 0.1))),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -283,7 +283,7 @@ class _IncidentCard extends StatelessWidget {
                           color: statusColor,
                           shape: BoxShape.circle,
                           boxShadow: [
-                            BoxShadow(color: statusColor.withOpacity(0.3), blurRadius: 4, spreadRadius: 1),
+                            BoxShadow(color: statusColor.withValues(alpha: 0.3), blurRadius: 4, spreadRadius: 1),
                           ],
                         ),
                       ),
@@ -381,7 +381,7 @@ class _IncidentCard extends StatelessWidget {
         color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF9FAFF),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Icon(icon, size: 12, color: isDarkMode ? Colors.white38 : AppColors.primary.withOpacity(0.6)),
+      child: Icon(icon, size: 12, color: isDarkMode ? Colors.white38 : AppColors.primary.withValues(alpha: 0.6)),
     );
   }
 }

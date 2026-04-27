@@ -47,8 +47,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       body: widget.child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.black.withOpacity(0.7) : Colors.white.withOpacity(0.85),
-          border: Border(top: BorderSide(color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05), width: 0.5)),
+          color: isDarkMode ? Colors.black.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.85),
+          border: Border(top: BorderSide(color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05), width: 0.5)),
         ),
         child: ClipRect(
           child: BackdropFilter(

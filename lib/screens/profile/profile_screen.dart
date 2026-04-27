@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../models/user_model.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/fluent_ui.dart';
@@ -60,10 +62,10 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         const SizedBox(height: 60),
                         // Avatar with ring
-                        _buildAvatar(context, ref, user, isDarkMode),
+                        _buildAvatar(context, ref, authState, user, isDarkMode),
                         const SizedBox(height: 16),
                         Text(
-                          user?.displayName ?? 'Loading Profile...',
+                          user?.displayName ?? (authState.isLoading ? 'Updating...' : 'Loading Profile...'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -259,8 +261,10 @@ class ProfileScreen extends ConsumerWidget {
 
   // ─── Component Builders ───
 
-  Widget _buildAvatar(
-      BuildContext context, WidgetRef ref, dynamic user, bool isDarkMode) {
+  Widget _buildAvatar(BuildContext context, WidgetRef ref,
+      AsyncValue<UserModel?> authState, dynamic user, bool isDarkMode) {
+    final bool isUploading = authState.isLoading && authState.hasValue;
+
     return Stack(
       children: [
         Container(
@@ -294,30 +298,53 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              child: ClipOval(
-                child: user?.photoUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: user!.photoUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        ),
-                        errorWidget: (context, url, error) => Center(
-                          child: Icon(
-                            _getRoleIcon(user?.role),
-                            color: Colors.white,
-                            size: 42,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipOval(
+                    child: user?.photoUrl != null
+                        ? GestureDetector(
+                            onTap: () => FluentImageViewer.show(context,
+                                imageUrl: user!.photoUrl!,
+                                title: '${user.displayName}\'s Profile Photo'),
+                            child: CachedNetworkImage(
+                              imageUrl: user!.photoUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              ),
+                              errorWidget: (context, url, error) => Center(
+                                child: Icon(
+                                  _getRoleIcon(user?.role),
+                                  color: Colors.white,
+                                  size: 42,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              _getRoleIcon(user?.role),
+                              color: Colors.white,
+                              size: 42,
+                            ),
                           ),
-                        ),
-                      )
-                    : Center(
-                        child: Icon(
-                          _getRoleIcon(user?.role),
+                  ),
+                  if (isUploading)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
                           color: Colors.white,
-                          size: 42,
+                          strokeWidth: 3,
                         ),
                       ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -326,11 +353,11 @@ class ProfileScreen extends ConsumerWidget {
           right: 0,
           bottom: 0,
           child: GestureDetector(
-            onTap: () => _showPhotoOptions(context, ref, user),
+            onTap: isUploading ? null : () => _showPhotoOptions(context, ref, user),
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: isUploading ? Colors.grey : AppColors.primary,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2.5),
                 boxShadow: [
@@ -341,8 +368,11 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              child:
-                  const Icon(LucideIcons.camera, color: Colors.white, size: 16),
+              child: Icon(
+                isUploading ? LucideIcons.loader2 : LucideIcons.camera,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
           ),
         ),
@@ -386,10 +416,7 @@ class ProfileScreen extends ConsumerWidget {
               title: 'Take a Photo',
               subtitle: 'Capture using camera',
               color: AppColors.primary,
-              onTap: () {
-                Navigator.pop(context);
-                _processItem(context, ref, ImageSource.camera);
-              },
+              onTap: () => _processItem(context, ref, ImageSource.camera),
               isDarkMode: isDarkMode,
             ),
             _photoOptionTile(
@@ -398,10 +425,7 @@ class ProfileScreen extends ConsumerWidget {
               title: 'Choose from Gallery',
               subtitle: 'Select from your photos',
               color: Colors.blue,
-              onTap: () {
-                Navigator.pop(context);
-                _processItem(context, ref, ImageSource.gallery);
-              },
+              onTap: () => _processItem(context, ref, ImageSource.gallery),
               isDarkMode: isDarkMode,
             ),
             if (user?.photoUrl != null)
@@ -495,10 +519,159 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _processItem(
       BuildContext context, WidgetRef ref, ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source, imageQuality: 70);
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked == null) return;
 
-    final bytes = await picked.readAsBytes();
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressQuality: 90,
+      maxWidth: 512,
+      maxHeight: 512,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Edit Profile Photo',
+          toolbarColor: AppColors.primary,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Edit Profile Photo',
+          aspectRatioLockEnabled: true,
+        ),
+        WebUiSettings(
+          context: context,
+          presentStyle: WebPresentStyle.dialog,
+          size: const CropperSize(width: 400, height: 400),
+          customDialogBuilder: (cropper, initCropper, crop, rotate, scale) {
+            double zoomValue = 1.0;
+            return StatefulBuilder(
+              builder: (context, setState) {
+                // Initialize cropper on first build
+                initCropper();
+                
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+
+                return Dialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+                  child: Container(
+                    width: 460,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Crop Image',
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(LucideIcons.x, size: 20),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: SizedBox(width: 400, height: 400, child: cropper),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Zoom Control Section
+                        Column(
+                          children: [
+                            const Text(
+                              'Zoom',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(LucideIcons.rotateCcw, size: 20),
+                                  onPressed: () => rotate(RotationAngle.counterClockwise90),
+                                  tooltip: 'Rotate Left',
+                                ),
+                                const Text('-', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                                Expanded(
+                                  child: SliderTheme(
+                                    data: SliderTheme.of(context).copyWith(
+                                      activeTrackColor: AppColors.primary,
+                                      thumbColor: AppColors.primary,
+                                      overlayColor: AppColors.primary.withValues(alpha: 0.1),
+                                    ),
+                                    child: Slider(
+                                      value: zoomValue,
+                                      min: 1.0,
+                                      max: 3.0,
+                                      onChanged: (value) {
+                                        setState(() => zoomValue = value);
+                                        scale(value);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const Text('+', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.rotateCw, size: 20),
+                                  onPressed: () => rotate(RotationAngle.clockwise90),
+                                  tooltip: 'Rotate Right',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('CANCEL', style: TextStyle(fontWeight: FontWeight.w800)),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final result = await crop();
+                                if (context.mounted) Navigator.pop(context, result);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('CROP', style: TextStyle(fontWeight: FontWeight.w900)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+
+    if (context.mounted) {
+      Navigator.pop(context); // Close selection menu after cropper
+    }
+
+    if (croppedFile == null) return;
+
+    final bytes = await croppedFile.readAsBytes();
     await ref.read(authProvider.notifier).uploadProfilePhoto(bytes);
 
     if (context.mounted) {
@@ -720,7 +893,7 @@ class ProfileScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LucideIcons.logOut, size: 20),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text('LOGOUT FROM SESSION',
                 style: TextStyle(
                     fontWeight: FontWeight.w900,

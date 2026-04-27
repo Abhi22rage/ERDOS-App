@@ -29,11 +29,11 @@ class ReportsScreen extends ConsumerWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+                        color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -155,7 +155,7 @@ class ReportsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, size: 20, color: color),
@@ -223,7 +223,7 @@ class ReportsScreen extends ConsumerWidget {
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: pct,
-              backgroundColor: isDarkMode ? Colors.white.withOpacity(0.05) : const Color(0xFFF0F3F9),
+              backgroundColor: isDarkMode ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF0F3F9),
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
               minHeight: 12,
             ),
@@ -252,7 +252,7 @@ class ReportsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, size: 22, color: AppColors.primary),

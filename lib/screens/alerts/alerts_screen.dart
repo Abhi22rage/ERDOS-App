@@ -67,7 +67,7 @@ class AlertsScreen extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.05),
+                                color: AppColors.primary.withValues(alpha: 0.05),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -121,8 +121,8 @@ class AlertsScreen extends ConsumerWidget {
                             child: FluentCard(
                               padding: const EdgeInsets.all(18),
                               color: isRead 
-                                  ? (isDarkMode ? Colors.white.withOpacity(0.03) : Colors.white)
-                                  : AppColors.primary.withOpacity(isDarkMode ? 0.1 : 0.06),
+                                  ? (isDarkMode ? Colors.white.withValues(alpha: 0.03) : Colors.white)
+                                  : AppColors.primary.withValues(alpha: isDarkMode ? 0.1 : 0.06),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -131,8 +131,8 @@ class AlertsScreen extends ConsumerWidget {
                                     height: 44,
                                     decoration: BoxDecoration(
                                       color: isRead
-                                          ? (isDarkMode ? Colors.white.withOpacity(0.05) : const Color(0xFFF0F3F9))
-                                          : AppColors.primary.withOpacity(0.1),
+                                          ? (isDarkMode ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF0F3F9))
+                                          : AppColors.primary.withValues(alpha: 0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(

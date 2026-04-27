@@ -64,11 +64,11 @@ class UserModel {
     );
   }
 
-  Map<String, dynamic> toJson() => {
+      Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'email': email,
-        'mobile': mobile,
+        'phone': mobile,
         'role': role,
         'category': category,
         'is_verified': isVerified,
@@ -80,7 +80,51 @@ class UserModel {
         'district': district,
         'country': country,
         'postal_code': postalCode,
+        'photo_url': photoUrl,
       };
+
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? mobile,
+    String? role,
+    String? category,
+    bool? isVerified,
+    String? fcmToken,
+    String? address,
+    String? addressLine,
+    String? areaLocality,
+    String? city,
+    String? state,
+    String? district,
+    String? country,
+    int? postalCode,
+    DateTime? createdAt,
+    String? photoUrl,
+    bool clearPhotoUrl = false,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      mobile: mobile ?? this.mobile,
+      role: role ?? this.role,
+      category: category ?? this.category,
+      isVerified: isVerified ?? this.isVerified,
+      fcmToken: fcmToken ?? this.fcmToken,
+      address: address ?? this.address,
+      addressLine: addressLine ?? this.addressLine,
+      areaLocality: areaLocality ?? this.areaLocality,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      district: district ?? this.district,
+      country: country ?? this.country,
+      postalCode: postalCode ?? this.postalCode,
+      createdAt: createdAt ?? this.createdAt,
+      photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+    );
+  }
 
   String get displayName => name ?? 'User';
 

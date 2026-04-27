@@ -69,7 +69,6 @@ mixin _ReportMixin {
         'title': d['work_name'] ?? 'Untitled work',
       }).toList();
     } catch (e) {
-      print('SCHEMES ERROR: $e');
       return [];
     }
   }

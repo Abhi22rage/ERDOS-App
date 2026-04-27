@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/fluent_ui.dart';
 
@@ -44,8 +43,8 @@ class ContractorProfileScreen extends StatelessWidget {
                               height: 90,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.primary.withOpacity(0.1),
-                                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 2),
                               ),
                               child: const Center(child: Icon(LucideIcons.hardHat, size: 40, color: AppColors.primary)),
                             ),
@@ -135,7 +134,7 @@ class ContractorProfileScreen extends StatelessWidget {
                                 foregroundColor: AppColors.primary,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
                               ),
                               icon: const Icon(LucideIcons.phone, size: 16),
                               label: const Text('CALL', style: TextStyle(fontWeight: FontWeight.w800)),
@@ -149,7 +148,7 @@ class ContractorProfileScreen extends StatelessWidget {
                                 foregroundColor: AppColors.primary,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
                               ),
                               icon: const Icon(LucideIcons.messageSquare, size: 16),
                               label: const Text('MESSAGE', style: TextStyle(fontWeight: FontWeight.w800)),
@@ -192,7 +191,7 @@ class ContractorProfileScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isDarkMode ? Colors.white.withOpacity(0.05) : const Color(0xFFF9FAFF),
+            color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF9FAFF),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, size: 16, color: AppColors.primary),
@@ -214,9 +213,9 @@ class ContractorProfileScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+        color: isDarkMode ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+        border: Border.all(color: isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05)),
       ),
       child: Text(
         label,
