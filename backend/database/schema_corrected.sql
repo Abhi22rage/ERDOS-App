@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 -- =============================================================================
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
-    id CHAR(36) PRIMARY KEY,
+    id VARCHAR(30) PRIMARY KEY,
     -- UUID
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE,
@@ -88,8 +88,8 @@ CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 -- fast soft-delete filter
 -- User Sessions — stateful session management with instant revocation
 CREATE TABLE IF NOT EXISTS user_sessions (
-    id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    user_id VARCHAR(30) NOT NULL,
     ip_address VARCHAR(45),
     user_agent TEXT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -147,7 +147,7 @@ CREATE INDEX idx_pincodes_code ON pincodes(code);
 -- =============================================================================
 -- 1. Divisions
 CREATE TABLE IF NOT EXISTS divisions (
-    id CHAR(36) PRIMARY KEY,
+    id VARCHAR(30) PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     district_id INT,
     description TEXT,
@@ -158,8 +158,8 @@ CREATE TABLE IF NOT EXISTS divisions (
 CREATE INDEX idx_divisions_district ON divisions(district_id);
 -- 2. Water Intake Plants (Barge)
 CREATE TABLE IF NOT EXISTS water_intake_plants (
-    id CHAR(36) PRIMARY KEY,
-    division_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    division_id VARCHAR(30) NOT NULL,
     name VARCHAR(150) NOT NULL,
     latitude DECIMAL(10, 8),
     longitude DECIMAL(11, 8),
@@ -176,8 +176,8 @@ CREATE INDEX idx_wip_division ON water_intake_plants(division_id);
 CREATE INDEX idx_wip_pincode ON water_intake_plants(pincode_id);
 -- 3. Production Centres (WSS / Plants)
 CREATE TABLE IF NOT EXISTS production_centres (
-    id CHAR(36) PRIMARY KEY,
-    intake_plant_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    intake_plant_id VARCHAR(30) NOT NULL,
     name VARCHAR(150) NOT NULL,
     capacity_mld FLOAT,
     latitude DECIMAL(10, 8),
@@ -196,8 +196,8 @@ CREATE INDEX idx_pc_intake_plant ON production_centres(intake_plant_id);
 CREATE INDEX idx_pc_pincode ON production_centres(pincode_id);
 -- 4. Water Treatment Plants (WTP)
 CREATE TABLE IF NOT EXISTS water_treatment_plants (
-    id CHAR(36) PRIMARY KEY,
-    centre_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    centre_id VARCHAR(30) NOT NULL,
     name VARCHAR(150) NOT NULL,
     latitude DECIMAL(10, 8),
     longitude DECIMAL(11, 8),
@@ -216,8 +216,8 @@ CREATE INDEX idx_wtp_centre ON water_treatment_plants(centre_id);
 CREATE INDEX idx_wtp_pincode ON water_treatment_plants(pincode_id);
 -- 5. Boosting Stations
 CREATE TABLE IF NOT EXISTS boosting_stations (
-    id CHAR(36) PRIMARY KEY,
-    wtp_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    wtp_id VARCHAR(30) NOT NULL,
     name VARCHAR(150) NOT NULL,
     latitude DECIMAL(10, 8),
     longitude DECIMAL(11, 8),
@@ -235,10 +235,10 @@ CREATE INDEX idx_bs_wtp ON boosting_stations(wtp_id);
 CREATE INDEX idx_bs_pincode ON boosting_stations(pincode_id);
 -- 6. Components (linked to Barge, WTP, or Boosting Station)
 CREATE TABLE IF NOT EXISTS components (
-    id CHAR(36) PRIMARY KEY,
-    intake_plant_id CHAR(36),
-    wtp_id CHAR(36),
-    station_id CHAR(36),
+    id VARCHAR(30) PRIMARY KEY,
+    intake_plant_id VARCHAR(30),
+    wtp_id VARCHAR(30),
+    station_id VARCHAR(30),
     category VARCHAR(100),
     -- Electrical, Mechanical, Civil, etc.
     component_type VARCHAR(100),
@@ -266,8 +266,8 @@ CREATE INDEX idx_comp_station ON components(station_id);
 -- 6.1 Component Units (Individual instances for quantity > 1)
 -- Tracks specific physical units (e.g., "Pump 01", "Pump 02")
 CREATE TABLE IF NOT EXISTS component_units (
-    id CHAR(36) PRIMARY KEY,
-    component_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    component_id VARCHAR(30) NOT NULL,
     unit_identifier VARCHAR(100) NOT NULL,
     -- e.g., 'Pump01', 'Pump02'
     unit_status ENUM(
@@ -286,18 +286,18 @@ CREATE INDEX idx_comp_unit_parent ON component_units(component_id);
 -- 4. SCHEMES & BENEFICIARIES
 -- =============================================================================
 -- 1. Schemes
--- FIX: facility_id was an unenforced polymorphic CHAR(36).
+-- FIX: facility_id was an unenforced polymorphic VARCHAR(30).
 --      Replaced with three nullable FKs + a CHECK to ensure exactly one is set.
 --      facility_type ENUM kept for quick filtering without joins.
 CREATE TABLE IF NOT EXISTS schemes (
-    id CHAR(36) PRIMARY KEY,
-    division_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    division_id VARCHAR(30) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     -- Polymorphic facility link — exactly one of the three must be non-NULL
-    production_centre_id CHAR(36) NULL,
-    wtp_id CHAR(36) NULL,
-    boosting_station_id CHAR(36) NULL,
+    production_centre_id VARCHAR(30) NULL,
+    wtp_id VARCHAR(30) NULL,
+    boosting_station_id VARCHAR(30) NULL,
     facility_type ENUM('production_centre', 'wtp', 'boosting_station') NOT NULL,
     revenue_target DECIMAL(15, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -327,8 +327,8 @@ CREATE TABLE IF NOT EXISTS schemes (
 CREATE INDEX idx_schemes_division ON schemes(division_id);
 -- 2. Beneficiary Institutions
 CREATE TABLE IF NOT EXISTS beneficiary_institutions (
-    id CHAR(36) PRIMARY KEY,
-    scheme_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    scheme_id VARCHAR(30) NOT NULL,
     name VARCHAR(255) NOT NULL,
     type VARCHAR(100),
     -- School, Hospital, Govt Office, etc.
@@ -345,8 +345,8 @@ CREATE INDEX idx_bi_scheme ON beneficiary_institutions(scheme_id);
 CREATE INDEX idx_bi_pincode ON beneficiary_institutions(pincode_id);
 -- 3. Household Registry
 CREATE TABLE IF NOT EXISTS households (
-    id CHAR(36) PRIMARY KEY,
-    scheme_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    scheme_id VARCHAR(30) NOT NULL,
     household_head VARCHAR(255) NOT NULL,
     connection_id VARCHAR(100) UNIQUE,
     pincode_id INT,
@@ -362,13 +362,13 @@ CREATE INDEX idx_households_scheme ON households(scheme_id);
 CREATE INDEX idx_households_pincode ON households(pincode_id);
 -- 4. Water Quality Reports
 CREATE TABLE IF NOT EXISTS water_quality_reports (
-    id CHAR(36) PRIMARY KEY,
-    scheme_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    scheme_id VARCHAR(30) NOT NULL,
     test_date DATE NOT NULL,
     parameters JSON,
     -- pH, Turbidity, Chlorine level, etc.
     overall_status ENUM('safe', 'unsafe', 'warning') DEFAULT 'safe',
-    tested_by CHAR(36),
+    tested_by VARCHAR(30),
     report_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (scheme_id) REFERENCES schemes(id) ON DELETE RESTRICT,
@@ -378,9 +378,9 @@ CREATE TABLE IF NOT EXISTS water_quality_reports (
 CREATE INDEX idx_wqr_scheme ON water_quality_reports(scheme_id);
 -- 5. Revenue Collection Status
 CREATE TABLE IF NOT EXISTS revenue_collection (
-    id CHAR(36) PRIMARY KEY,
+    id VARCHAR(30) PRIMARY KEY,
     -- FIX: explicit PRIMARY KEY declaration
-    scheme_id CHAR(36) NOT NULL,
+    scheme_id VARCHAR(30) NOT NULL,
     period_label VARCHAR(50),
     -- e.g., 'Oct 2023'
     target_amount DECIMAL(15, 2),
@@ -396,13 +396,13 @@ CREATE INDEX idx_rc_scheme ON revenue_collection(scheme_id);
 -- 5. PIPELINES
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS pipelines (
-    id CHAR(36) PRIMARY KEY,
-    intake_plant_id CHAR(36),
-    wtp_id CHAR(36),
-    station_id CHAR(36),
-    component_unit_id CHAR(36),
+    id VARCHAR(30) PRIMARY KEY,
+    intake_plant_id VARCHAR(30),
+    wtp_id VARCHAR(30),
+    station_id VARCHAR(30),
+    component_unit_id VARCHAR(30),
     -- Optional: specific component it serves
-    scheme_id CHAR(36),
+    scheme_id VARCHAR(30),
     -- Optional: supply scheme link
     name VARCHAR(150) NOT NULL,
     diameter_mm INT,
@@ -447,14 +447,14 @@ CREATE TABLE IF NOT EXISTS breakdown_statuses (
 -- =============================================================================
 -- Breakdown Reports
 CREATE TABLE IF NOT EXISTS breakdowns (
-    id CHAR(36) PRIMARY KEY,
+    id VARCHAR(30) PRIMARY KEY,
     report_number VARCHAR(50) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    pipeline_id CHAR(36),
-    component_unit_id CHAR(36),
+    pipeline_id VARCHAR(30),
+    component_unit_id VARCHAR(30),
     -- Changed to track specific physical units
-    reporter_id CHAR(36) NOT NULL,
+    reporter_id VARCHAR(30) NOT NULL,
     status_id INT NOT NULL,
     severity ENUM('critical', 'high', 'medium', 'low') DEFAULT 'low',
     latitude DECIMAL(10, 8),
@@ -463,7 +463,7 @@ CREATE TABLE IF NOT EXISTS breakdowns (
     address_line TEXT,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     approved_at TIMESTAMP NULL,
-    approved_by CHAR(36),
+    approved_by VARCHAR(30),
     auto_approval_at TIMESTAMP NULL,
     completion_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -493,8 +493,8 @@ CREATE INDEX idx_bd_submitted ON breakdowns(submitted_at);
 CREATE INDEX idx_bd_approved_by ON breakdowns(approved_by);
 -- Execution Stages (stage-wise repair progress)
 CREATE TABLE IF NOT EXISTS execution_stages (
-    id CHAR(36) PRIMARY KEY,
-    breakdown_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    breakdown_id VARCHAR(30) NOT NULL,
     stage_name ENUM(
         'initial_inspection',
         'damage_report',
@@ -504,7 +504,7 @@ CREATE TABLE IF NOT EXISTS execution_stages (
         'road_restoration',
         'inspection'
     ) NOT NULL,
-    uploaded_by CHAR(36) NOT NULL,
+    uploaded_by VARCHAR(30) NOT NULL,
     -- FIX: track who uploaded each stage
     remarks TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -518,10 +518,10 @@ CREATE TABLE IF NOT EXISTS execution_stages (
 CREATE INDEX idx_es_breakdown ON execution_stages(breakdown_id);
 -- Centralized Media Table
 CREATE TABLE IF NOT EXISTS media (
-    id CHAR(36) PRIMARY KEY,
-    breakdown_id CHAR(36),
+    id VARCHAR(30) PRIMARY KEY,
+    breakdown_id VARCHAR(30),
     -- Nullable: link to initial report
-    execution_stage_id CHAR(36),
+    execution_stage_id VARCHAR(30),
     -- Nullable: link to work progress
     media_url VARCHAR(255) NOT NULL,
     media_type ENUM('photo', 'video') NOT NULL,
@@ -529,7 +529,7 @@ CREATE TABLE IF NOT EXISTS media (
     -- MIME type (e.g., image/jpeg)
     file_size BIGINT,
     -- Size in bytes
-    uploaded_by CHAR(36) NOT NULL,
+    uploaded_by VARCHAR(30) NOT NULL,
     gps_coords JSON,
     remarks TEXT,
     metadata_json JSON,
@@ -546,8 +546,8 @@ CREATE INDEX idx_media_uploader ON media(uploaded_by);
 -- =============================================================================
 -- Contractors Table
 CREATE TABLE IF NOT EXISTS contractor (
-    id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36) UNIQUE NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    user_id VARCHAR(30) UNIQUE NOT NULL,
     company_name VARCHAR(255) NOT NULL,
     pincode_id INT,
     address_line TEXT,
@@ -580,12 +580,12 @@ CREATE INDEX idx_contractor_status ON contractor(status);
 CREATE INDEX idx_contractor_pincode ON contractor(pincode_id);
 -- Work Orders (Contractor Assignments)
 CREATE TABLE IF NOT EXISTS work_orders (
-    id CHAR(36) PRIMARY KEY,
-    breakdown_id CHAR(36) NOT NULL,
-    contractor_id CHAR(36) NOT NULL,
-    supervisor_id CHAR(36),
+    id VARCHAR(30) PRIMARY KEY,
+    breakdown_id VARCHAR(30) NOT NULL,
+    contractor_id VARCHAR(30) NOT NULL,
+    supervisor_id VARCHAR(30),
     -- PHE Official supervising the work
-    assigned_by CHAR(36) NOT NULL,
+    assigned_by VARCHAR(30) NOT NULL,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expected_completion_date DATETIME,
     status ENUM(
@@ -613,8 +613,8 @@ CREATE INDEX idx_wo_status ON work_orders(status);
 CREATE INDEX idx_wo_supervisor ON work_orders(supervisor_id);
 -- Work Order Task Checklist
 CREATE TABLE IF NOT EXISTS work_order_tasks (
-    id CHAR(36) PRIMARY KEY,
-    work_order_id CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    work_order_id VARCHAR(30) NOT NULL,
     task_name VARCHAR(255) NOT NULL,
     description TEXT,
     is_completed BOOLEAN DEFAULT FALSE,
@@ -627,8 +627,8 @@ CREATE TABLE IF NOT EXISTS work_order_tasks (
 CREATE INDEX idx_wot_work_order ON work_order_tasks(work_order_id);
 -- Contractor Performance Reviews
 CREATE TABLE IF NOT EXISTS contractor_performance (
-    id CHAR(36) PRIMARY KEY,
-    assignment_id CHAR(36) UNIQUE NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    assignment_id VARCHAR(30) UNIQUE NOT NULL,
     rating INT CHECK (
         rating >= 1
         AND rating <= 5
@@ -637,7 +637,7 @@ CREATE TABLE IF NOT EXISTS contractor_performance (
     actual_completion_time TIMESTAMP,
     delay_days INT,
     -- (actual_completion_time - expected_completion_date)
-    rated_by CHAR(36) NOT NULL,
+    rated_by VARCHAR(30) NOT NULL,
     rated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (assignment_id) REFERENCES work_orders(id) ON DELETE CASCADE,
     FOREIGN KEY (rated_by) REFERENCES users(id) ON DELETE RESTRICT
@@ -647,9 +647,9 @@ CREATE TABLE IF NOT EXISTS contractor_performance (
 -- =============================================================================
 -- Approval Flow (Immutable Audit Trail — no updates, only inserts)
 CREATE TABLE IF NOT EXISTS approval_flow (
-    id CHAR(36) PRIMARY KEY,
-    breakdown_id CHAR(36) NOT NULL,
-    approver_id CHAR(36),
+    id VARCHAR(30) PRIMARY KEY,
+    breakdown_id VARCHAR(30) NOT NULL,
+    approver_id VARCHAR(30),
     -- NULL if system / auto-approved
     action ENUM(
         'SUBMITTED',
@@ -669,10 +669,10 @@ CREATE INDEX idx_af_approver ON approval_flow(approver_id);
 CREATE INDEX idx_af_timestamp ON approval_flow(action_timestamp);
 -- Completion Certificates
 CREATE TABLE IF NOT EXISTS completion_certificates (
-    id CHAR(36) PRIMARY KEY,
-    breakdown_id CHAR(36) UNIQUE NOT NULL,
-    applied_by CHAR(36) NOT NULL,
-    issued_by CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    breakdown_id VARCHAR(30) UNIQUE NOT NULL,
+    applied_by VARCHAR(30) NOT NULL,
+    issued_by VARCHAR(30) NOT NULL,
     pdf_url VARCHAR(255) NOT NULL,
     budget_allocated DECIMAL(15, 2),
     repair_cost DECIMAL(15, 2),
@@ -684,20 +684,20 @@ CREATE TABLE IF NOT EXISTS completion_certificates (
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- Repair History (Physical Audit Table — populated via trigger on certificate insert)
 CREATE TABLE IF NOT EXISTS repair_history (
-    id CHAR(36) PRIMARY KEY,
-    breakdown_id CHAR(36),
-    certificate_id CHAR(36),
+    id VARCHAR(30) PRIMARY KEY,
+    breakdown_id VARCHAR(30),
+    certificate_id VARCHAR(30),
     -- Asset snapshot (denormalized intentionally for permanent record)
-    asset_id CHAR(36) NOT NULL,
+    asset_id VARCHAR(30) NOT NULL,
     asset_type ENUM('pipeline', 'component') NOT NULL,
     asset_name VARCHAR(255) NOT NULL,
     -- Financial snapshot
     budget_allocated DECIMAL(15, 2),
     repair_cost DECIMAL(15, 2) NOT NULL,
     -- Metadata
-    contractor_id CHAR(36),
+    contractor_id VARCHAR(30),
     completed_at TIMESTAMP NOT NULL,
-    verified_by CHAR(36),
+    verified_by VARCHAR(30),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     -- FIX: SET NULL on breakdown/certificate preserves history even if source records are removed
     FOREIGN KEY (breakdown_id) REFERENCES breakdowns(id) ON DELETE
@@ -719,12 +719,12 @@ CREATE INDEX idx_rh_contractor ON repair_history(contractor_id);
 -- Master Audit Logs (immutable — never update or delete rows here)
 CREATE TABLE IF NOT EXISTS audit_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id CHAR(36),
+    user_id VARCHAR(30),
     action_type VARCHAR(50) NOT NULL,
     -- CREATE, UPDATE, DELETE, LOGIN, etc.
     entity_type VARCHAR(50) NOT NULL,
     -- breakdowns, users, work_orders, etc.
-    entity_id CHAR(36),
+    entity_id VARCHAR(30),
     diff_json JSON,
     -- { "old": {}, "new": {} }
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -738,9 +738,9 @@ CREATE INDEX idx_al_timestamp ON audit_logs(timestamp);
 -- Notification Logs
 -- Note: FCM tokens in target_fcm_token must be invalidated/updated on user logout or device change
 CREATE TABLE IF NOT EXISTS notification_logs (
-    id CHAR(36) PRIMARY KEY,
-    sent_by CHAR(36),
-    sent_to CHAR(36) NOT NULL,
+    id VARCHAR(30) PRIMARY KEY,
+    sent_by VARCHAR(30),
+    sent_to VARCHAR(30) NOT NULL,
     target_fcm_token VARCHAR(255),
     -- Snapshot of token at send time
     is_read BOOLEAN DEFAULT FALSE,

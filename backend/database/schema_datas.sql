@@ -28,7 +28,7 @@ INSERT IGNORE INTO users (
         password,
         is_verified
     )
-SELECT '00000000-0000-0000-0000-000000000000',
+SELECT 'usr_sys_admin',
     'System Admin',
     'admin@phe.app',
     '9999999999',
@@ -122,90 +122,144 @@ INSERT IGNORE INTO pincodes (code, city_id, area_name)
 VALUES ('781005', @city_id, 'Bhangagarh');
 INSERT IGNORE INTO pincodes (code, city_id, area_name)
 VALUES ('781006', @city_id, 'Dispur');
--- Seed Example Infrastructure
-SET @division_id = 'd1111111-1111-1111-1111-111111111111';
-SET @barge_panbazar = 'b1111111-1111-1111-1111-111111111111';
-SET @centre_dispur = 'c1111111-1111-1111-1111-111111111111';
-SET @wtp_panbazar = 'w1111111-1111-1111-1111-111111111111';
-SET @station_bhangagarh = 's1111111-1111-1111-1111-111111111111';
+-- =============================================================================
+-- 4. Seed INFRASTRUCTURE HIERARCHY
+-- =============================================================================
 INSERT IGNORE INTO divisions (id, name, district_id, description)
 VALUES (
-        @division_id,
-        'Guwahati Division No II',
+        'div_ght2',
+        'Guwahati Division No. II',
         @district_id,
-        'Guwahati Urban Water Supply'
+        'Main Urban Division'
     );
 INSERT IGNORE INTO water_intake_plants (
         id,
         division_id,
         name,
-        latitude,
-        longitude,
-        location_address,
-        capacity_mld
-    )
-VALUES (
-        @barge_panbazar,
-        @division_id,
-        'Panbazar Intake Barge',
-        26.1906,
-        91.7456,
-        'Brahmaputra River, Panbazar',
-        20.0
-    );
-INSERT IGNORE INTO production_centres (
-        id,
-        intake_plant_id,
-        name,
-        latitude,
-        longitude,
-        location_address,
         capacity_mld,
-        type
+        address_line
     )
 VALUES (
-        @centre_dispur,
-        @barge_panbazar,
+        'brg_panbazar',
+        'div_ght2',
+        'Panbazar Intake Barge',
+        20.0,
+        'Brahmaputra River, Panbazar'
+    );
+-- 3 Production Centres
+INSERT IGNORE INTO production_centres (id, intake_plant_id, name, capacity_mld, type)
+VALUES (
+        'pc_dispur',
+        'brg_panbazar',
         'DISPUR WSS',
-        26.1500,
-        91.7900,
-        'Dispur Area',
         12.7,
         'WSS'
+    ),
+    (
+        'pc_gu_aec',
+        'brg_panbazar',
+        'GU & AEC WSS',
+        4.5,
+        'WSS'
+    ),
+    (
+        'pc_sarusajai',
+        'brg_panbazar',
+        'SARUSAJAI WSS',
+        3.0,
+        'WSS'
     );
-INSERT IGNORE INTO water_treatment_plants (
-        id,
-        centre_id,
-        name,
-        latitude,
-        longitude,
-        location_address,
-        capacity_mld
-    )
+-- Water Treatment Plants
+INSERT IGNORE INTO water_treatment_plants (id, centre_id, name, capacity_mld)
 VALUES (
-        @wtp_panbazar,
-        @centre_dispur,
+        'wtp_panbazar',
+        'pc_dispur',
         'Panbazar WTP',
-        26.1850,
-        91.7400,
-        'Panbazar',
         12.7
+    ),
+    (
+        'wtp_jalukbari',
+        'pc_gu_aec',
+        'Jalukbari WTP',
+        4.5
+    ),
+    (
+        'wtp_sarusajai',
+        'pc_sarusajai',
+        'Sarusajai WTP',
+        3.0
     );
-INSERT IGNORE INTO boosting_stations (
-        id,
-        wtp_id,
-        name,
-        latitude,
-        longitude,
-        location_address
-    )
+-- Boosting Stations
+INSERT IGNORE INTO boosting_stations (id, wtp_id, name)
 VALUES (
-        @station_bhangagarh,
-        @wtp_panbazar,
-        'Bhangagarh Boosting Station',
-        26.1600,
-        91.7700,
-        'Bhangagarh'
+        'bst_bhangagarh',
+        'wtp_panbazar',
+        'Bhangagarh Boosting Station'
+    ),
+    (
+        'bst_mla',
+        'wtp_panbazar',
+        'MLA Boosting Station'
+    ),
+    (
+        'bst_capital',
+        'wtp_panbazar',
+        'Capital Boosting Station'
+    ),
+    (
+        'bst_khanapara',
+        'wtp_panbazar',
+        'Khanapara Boosting Station'
+    ),
+    (
+        'bst_health',
+        'wtp_panbazar',
+        'Hengrabari Health Complex Boosting Station'
+    ),
+    (
+        'bst_colony',
+        'wtp_panbazar',
+        'Hengrabari Housing Colony Boosting Station'
+    ),
+    (
+        'bst_kahilipara',
+        'wtp_panbazar',
+        'Kahilipara Boosting Station'
+    ),
+    (
+        'bst_hudco',
+        'wtp_panbazar',
+        'HUDCO Boosting Station'
+    ),
+    (
+        'bst_zoo',
+        'wtp_panbazar',
+        'State Zoo Boosting Station'
+    ),
+    (
+        'bst_gmc_foot',
+        'wtp_panbazar',
+        'GMC Foot hill Boosting Station'
+    ),
+    (
+        'bst_gmc_top',
+        'wtp_panbazar',
+        'GMC Top hill Boosting Station'
+    ),
+    (
+        'bst_grade4',
+        'wtp_panbazar',
+        'Grade IV Boosting Station'
+    ),
+    (
+        'bst_gu_foothill',
+        'wtp_jalukbari',
+        'GU Foothill Boosting Station'
+    ),
+    (
+        'bst_sports_comp',
+        'wtp_sarusajai',
+        'Sarusajai Sports Complex Boosting Station'
     );
 -- =============================================================================
 -- 12. TRIGGERS (AUTOMATIC AUDITING)
@@ -239,13 +293,13 @@ END // -- Trigger: auto-populate repair_history when a completion certificate is
 CREATE TRIGGER trg_populate_repair_history
 AFTER
 INSERT ON completion_certificates FOR EACH ROW BEGIN
-DECLARE v_asset_id CHAR(36);
+DECLARE v_asset_id VARCHAR(30);
 DECLARE v_asset_type ENUM('pipeline', 'component');
 DECLARE v_asset_name VARCHAR(255);
 DECLARE v_completion_at TIMESTAMP;
-DECLARE v_contractor_id CHAR(36);
+DECLARE v_contractor_id VARCHAR(30);
 -- Fetch breakdown asset info and contractor
-SELECT COALESCE(b.pipeline_id, b.component_id),
+SELECT COALESCE(b.pipeline_id, b.component_unit_id),
     IF(
         b.pipeline_id IS NOT NULL,
         'pipeline',
@@ -265,10 +319,11 @@ IF v_asset_type = 'pipeline' THEN
 SELECT name INTO v_asset_name
 FROM pipelines
 WHERE id = v_asset_id;
-ELSE
-SELECT name INTO v_asset_name
-FROM components
-WHERE id = v_asset_id;
+ELSE -- For components, we fetch name from the parent component table via component_units
+SELECT c.name INTO v_asset_name
+FROM component_units cu
+    JOIN components c ON cu.component_id = c.id
+WHERE cu.id = v_asset_id;
 END IF;
 INSERT INTO repair_history (
         id,
@@ -284,7 +339,10 @@ INSERT INTO repair_history (
         verified_by
     )
 VALUES (
-        UUID(),
+        CONCAT(
+            'hist_',
+            SUBSTRING(REPLACE(UUID(), '-', ''), 1, 16)
+        ),
         NEW.breakdown_id,
         NEW.id,
         v_asset_id,
