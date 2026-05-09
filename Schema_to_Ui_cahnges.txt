@@ -1,0 +1,44 @@
+Based on the analysis of schema_corrected.sql and the Flutter frontend codebase (lib/models/ and lib/services/), here are the required tasks to sync the frontend UI with the newly normalized backend database schema.
+
+1. User & Authentication Sync (user_model.dart, api_service.auth.dart)
+Role Mapping: The frontend currently treats role as a string ('khalasi'). The backend uses role_id (INT) mapped to the roles table. Create logic to resolve string roles to role_id during signup and parsing.
+Address & Pincodes: The frontend attempts to save postal_code, city, state, district, country, and areaLocality directly to the users table. The backend now strictly uses pincode_id (INT) and address_line (TEXT). You need to implement an API call to resolve postal/city data to a pincode_id before creating/updating a user.
+Contractor Category: The UserModel currently expects category as a direct field on the user. The backend has moved this to a separate contractor table linked via user_id. You need to query the contractor table for contractor-specific details (category, status, experience, documents).
+
+2. Incidents & Breakdowns Sync (breakdown_model.dart, api_service.breakdown.dart)
+Table Rename: Update table queries from breakdown_reports to breakdowns.
+Status Field: The frontend updates status using strings (e.g., 'approved'). The backend now uses status_id (INT) referencing breakdown_statuses. Map UI status strings to the corresponding status_id.
+Asset References: The frontend relies on a generic assets table and asset_id. The backend has normalized infrastructure into specific tables (pipelines, components, boosting_stations, etc.). The breakdowns table requires either pipeline_id or component_id instead of a generic asset_id. The frontend payload must be updated accordingly.
+
+3. Approvals & Workflow Sync (api_service.approval.dart)
+Table Rename: Update table queries from approvals to approval_flow.
+Immutable Audit Trail: The frontend currently runs an .update() on pending approvals (api_service.approval.dart). The approval_flow table is an immutable audit trail. Change the approval/rejection logic to perform an .insert() into approval_flow with the corresponding action enum ('APPROVED', 'REJECTED') and remarks.
+
+4. Tasks & Schemes Sync (api_service.task.dart, api_service.report.dart)
+Schemes/Works: The frontend queries sopd_works. This must be updated to query the new schemes table.
+Progress Logs: The frontend queries sopd_progress_logs. This must be updated to query work_orders, work_order_tasks (for assignments), and execution_stages (for breakdown repair stages).
+Contractors Query: Update the table name in getContractors() from contractors (plural) to contractor (singular).
+
+5. Media Uploads Sync (api_service.media.dart)
+Table Rename: Update table inserts and queries from repair_media to media.
+Execution Stages: The frontend currently passes a string enum to a stage column. The backend media table now uses an execution_stage_id (CHAR). The frontend must first create a record in execution_stages and use its ID when uploading related media.
+Required Fields: Ensure uploaded_by (User ID) is always passed when inserting into the media table, as it is now marked NOT NULL in the database.
+
+Here is a summary of the additional critical tasks that were left out:
+
+1. Completion Certificates & Repair History (Major)
+
+The ApplyCertificateScreen currently only updates the status but doesn't actually insert into the completion_certificates table. This is critical because the backend relies on a database trigger on this table to populate the immutable repair_history audit trail.
+2. Notifications Sync (Critical Bug)
+
+The frontend tries to query notifications_log, but the backend table is actually named notification_logs.
+The frontend tries to mark notifications as read by passing 'status': 'read'. The backend status ENUM does not accept 'read' (only sent, delivered, failed, pending). This will cause a database crash.
+3. User Sessions & Security (Major)
+
+The schema introduced a user_sessions table for stateful tracking and idle timeouts, but the frontend currently only relies on stateless Supabase Auth. The login flow needs to be updated to integrate with this table.
+4. Soft Deletes (Small)
+
+The backend introduced a deleted_at column for soft deletes on users, components, pipelines, and contractor. The frontend GET queries must be updated to filter out records where deleted_at is not null.
+5. New Functional Modules
+
+If your app is expected to handle the new scheme structures, you will need entirely new UI components and API models for the households, beneficiary_institutions, water_quality_reports, and revenue_collection tables.
