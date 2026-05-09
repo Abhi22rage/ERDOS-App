@@ -6,6 +6,16 @@ import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/fluent_ui.dart';
 
+const _roles = [
+  {'label': 'Khalasi', 'value': 'khalasi'},
+  {'label': 'Junior Engineer (JE)', 'value': 'je'},
+  {'label': 'Asst. Engineer (AE)', 'value': 'ae'},
+  {'label': 'Asst. Exec. Engineer (AEE)', 'value': 'aee'},
+  {'label': 'Executive Engineer (EE)', 'value': 'ee'},
+  {'label': 'Supdt. Engineer (SE)', 'value': 'se'},
+  {'label': 'Contractor', 'value': 'contractor'},
+];
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -16,6 +26,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _mobileCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  String _selectedRole = 'ee';
   bool _showPassword = false;
   bool _loading = false;
 
@@ -113,6 +124,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 32),
+
+                            // Role Dropdown
+                            _buildDropdownField(isDarkMode),
+
+                            const SizedBox(height: 24),
 
                             // Mobile Input
                             _buildInputField(
@@ -332,6 +348,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField(bool isDarkMode) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'OFFICIAL ROLE',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: isDarkMode ? Colors.white38 : AppColors.textSecondary,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: isDarkMode
+                ? Colors.white.withValues(alpha: 0.05)
+                : const Color(0xFFF0F3F9),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+                color: isDarkMode
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.transparent),
+          ),
+          child: DropdownButtonFormField<String>(
+            initialValue: _selectedRole,
+            dropdownColor: isDarkMode ? const Color(0xFF1A1F26) : Colors.white,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              prefixIcon: Icon(LucideIcons.briefcase,
+                  size: 18,
+                  color: isDarkMode
+                      ? Colors.white38
+                      : AppColors.primary.withValues(alpha: 0.6)),
+              border: InputBorder.none,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            ),
+            items: _roles
+                .map((r) => DropdownMenuItem(
+                      value: r['value'],
+                      child: Text(r['label']!),
+                    ))
+                .toList(),
+            onChanged: (v) => setState(() => _selectedRole = v ?? 'ee'),
           ),
         ),
       ],

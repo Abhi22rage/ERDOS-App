@@ -597,7 +597,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'je':
         return LucideIcons.hardHat;
       case 'khalasi':
-      case 'jalmitra':
         return LucideIcons.droplets;
       case 'contractor':
         return LucideIcons.briefcase;

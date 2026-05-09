@@ -1,15 +1,20 @@
 import 'dart:async';
 import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/providers.dart';
 import '../../models/breakdown_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/fluent_ui.dart';
 import '../../widgets/gps_image_overlay.dart';
+import '../../widgets/allot_work_modal.dart';
+import '../../services/api_service.dart';
 import 'work_progress_upload_screen.dart';
 
 // ─── Progress Step Definitions ───────────────────────────────────────────────
@@ -59,8 +64,22 @@ class IncidentDetailScreen extends ConsumerWidget {
           ),
         ),
       ),
-      // ── Static Upload Progress Button ─────────────────────────────────────
-      bottomNavigationBar: _UploadProgressButton(incidentId: id),
+      // ── Conditional Bottom Actions ──────────────────────────────────────────
+      bottomNavigationBar: async.whenOrNull(
+        data: (breakdown) {
+          final user = ApiService.sessionUser;
+          if (user?.role == 'ee' && breakdown.status == 'approved') {
+            return _AllotContractorButton(incidentId: id);
+          } else if (user?.role == 'contractor' && breakdown.status == 'assigned') {
+            return _StartWorkButton(breakdown: breakdown);
+          } else if (breakdown.statusIndex >= 3) {
+            // Assume any authenticated user involved can upload progress if assigned or later
+            // (In reality, restrict to assigned contractor or supervising JE)
+            return _UploadProgressButton(incidentId: id);
+          }
+          return const SizedBox.shrink();
+        },
+      ) ?? const SizedBox.shrink(),
     );
   }
 
@@ -184,6 +203,11 @@ class IncidentDetailScreen extends ConsumerWidget {
                 ],
               ),
             ),
+
+            if (ApiService.sessionUser?.role == 'contractor' && breakdown.statusIndex >= 3 && breakdown.workOrder != null) ...[
+              const SizedBox(height: 32),
+              _ExcavationRequirementSection(breakdown: breakdown, isDarkMode: isDarkMode),
+            ],
 
             const SizedBox(height: 32),
             Row(
@@ -628,6 +652,424 @@ class _FullScreenGalleryState extends State<_FullScreenGallery> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ALLOT CONTRACTOR BUTTON (For EE Role)
+// ──────────────────────────────────────────────────────────────────────────────
+class _AllotContractorButton extends StatelessWidget {
+  final String incidentId;
+  const _AllotContractorButton({required this.incidentId});
+
+  void _showAllotModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AllotWorkModal(breakdownId: incidentId),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF161625) : Colors.white;
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: bgColor.withValues(alpha: isDark ? 0.88 : 0.94),
+            border: Border(
+              top: BorderSide(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                width: 1.5,
+              ),
+            ),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            20, 14, 20,
+            MediaQuery.of(context).padding.bottom + 14,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: () => _showAllotModal(context),
+              icon: const Icon(LucideIcons.userPlus, size: 20),
+              label: const Text(
+                'Allot Contractor',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.1),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ).copyWith(
+                overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.1)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// EXCAVATION REQUIREMENT SECTION
+// ──────────────────────────────────────────────────────────────────────────────
+class _ExcavationRequirementSection extends ConsumerStatefulWidget {
+  final BreakdownModel breakdown;
+  final bool isDarkMode;
+
+  const _ExcavationRequirementSection({required this.breakdown, required this.isDarkMode});
+
+  @override
+  ConsumerState<_ExcavationRequirementSection> createState() => _ExcavationRequirementSectionState();
+}
+
+class _ExcavationRequirementSectionState extends ConsumerState<_ExcavationRequirementSection> {
+  bool _isExcavationRequired = false;
+  bool _isUpdating = false;
+  bool _isUploadingCert = false;
+  String? _certUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExcavationRequired = widget.breakdown.workOrder?['excavation_required'] ?? false;
+    _certUrl = widget.breakdown.workOrder?['path_sammanay_cert_url'];
+  }
+
+  Future<void> _toggleRequirement(bool value) async {
+    final workOrderId = widget.breakdown.workOrder?['id'];
+    if (workOrderId == null) return;
+
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      await ref.read(apiServiceProvider).updateWorkOrderExcavation(workOrderId, value);
+      setState(() {
+        _isExcavationRequired = value;
+      });
+      // Refresh the breakdown to get latest data
+      ref.invalidate(breakdownDetailProvider(widget.breakdown.id));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() {
+        _isUpdating = false;
+      });
+    }
+  }
+
+  Future<void> _uploadCertificate() async {
+    final workOrderId = widget.breakdown.workOrder?['id'];
+    if (workOrderId == null) return;
+
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image == null) return;
+
+    setState(() {
+      _isUploadingCert = true;
+    });
+
+    try {
+      final url = await ref.read(apiServiceProvider).uploadPathSammanayCertificate(File(image.path), workOrderId);
+      setState(() {
+        _certUrl = url;
+      });
+      ref.invalidate(breakdownDetailProvider(widget.breakdown.id));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Certificate uploaded successfully'), backgroundColor: AppColors.success),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() {
+        _isUploadingCert = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const FluentSectionHeader(title: 'Work Requirements'),
+        const SizedBox(height: 16),
+        FluentCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Excavation Required?',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  _isUpdating
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Switch(
+                          value: _isExcavationRequired,
+                          onChanged: _toggleRequirement,
+                          activeColor: AppColors.primary,
+                        ),
+                ],
+              ),
+              if (_isExcavationRequired) ...[
+                const Divider(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(LucideIcons.alertTriangle, color: AppColors.warning, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Path Sammanay Required',
+                            style: TextStyle(
+                              color: widget.isDarkMode ? Colors.white : AppColors.textPrimary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Apply for repair approval in the Path Sammanay portal and upload the certificate to proceed with the work.',
+                        style: TextStyle(
+                          color: widget.isDarkMode ? Colors.white70 : AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final uri = Uri.parse('https://pwd.assam.gov.in/portlet-innerpage/path-sammanay');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Could not launch Path Sammanay Portal')),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(LucideIcons.externalLink, size: 16),
+                          label: const Text('Open Path Sammanay Portal'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (_certUrl != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(LucideIcons.checkCircle, color: AppColors.success, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Certificate Uploaded',
+                                  style: TextStyle(
+                                    color: widget.isDarkMode ? Colors.white : AppColors.textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _isUploadingCert ? null : _uploadCertificate,
+                                child: const Text('Update'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isUploadingCert ? null : _uploadCertificate,
+                            icon: _isUploadingCert 
+                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Icon(LucideIcons.uploadCloud, size: 16),
+                            label: Text(_isUploadingCert ? 'Uploading...' : 'Upload Certificate'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StartWorkButton extends ConsumerStatefulWidget {
+  final BreakdownModel breakdown;
+
+  const _StartWorkButton({required this.breakdown});
+
+  @override
+  ConsumerState<_StartWorkButton> createState() => _StartWorkButtonState();
+}
+
+class _StartWorkButtonState extends ConsumerState<_StartWorkButton> {
+  bool _isLoading = false;
+
+  Future<void> _handleStartWork() async {
+    final workOrder = widget.breakdown.workOrder;
+    if (workOrder == null) return;
+
+    final excavationRequired = workOrder['excavation_required'] == true;
+    final certUrl = workOrder['path_sammanay_cert_url'] as String?;
+
+    if (excavationRequired && (certUrl == null || certUrl.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload the Path Sammanay Certificate before starting work.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final user = ApiService.sessionUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await ref.read(apiServiceProvider).startWork(
+            widget.breakdown.id,
+            workOrder['id'],
+            user.id,
+          );
+          
+      ref.invalidate(breakdownDetailProvider(widget.breakdown.id));
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Work started successfully!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start work: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? const Color(0xFF161625) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton.icon(
+            onPressed: _isLoading ? null : _handleStartWork,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : const Icon(LucideIcons.playCircle, size: 20),
+            label: Text(
+              _isLoading ? 'Starting...' : 'Start Work',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -35,7 +35,8 @@ mixin _BreakdownMixin on _AuthMixin {
             asset:assets(id, name, component_type),
             work_stages:sopd_progress_logs(*),
             approvals:audit_log(*),
-            repair_media(*)
+            repair_media(*),
+            work_orders(*)
           ''').order('created_at', ascending: false);
 
       final data = await query;
@@ -54,7 +55,8 @@ mixin _BreakdownMixin on _AuthMixin {
             asset:assets(id, name, component_type),
             work_stages:sopd_progress_logs(*),
             approvals:audit_log(*),
-            repair_media(*)
+            repair_media(*),
+            work_orders(*)
           ''').eq('reported_by', userId).order('created_at', ascending: false);
 
       final List<BreakdownModel> dbItems =
@@ -100,7 +102,8 @@ mixin _BreakdownMixin on _AuthMixin {
             asset:assets(id, name, component_type),
             work_stages:sopd_progress_logs(*),
             approvals:audit_log(*),
-            repair_media(*)
+            repair_media(*),
+            work_orders(*)
           ''').eq('id', id).single();
 
       return BreakdownModel.fromJson(data);

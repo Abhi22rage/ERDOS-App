@@ -94,6 +94,27 @@ mixin _MediaMixin {
     }
   }
 
+  Future<String> uploadPathSammanayCertificate(File file, String workOrderId) async {
+    try {
+      final ext = file.path.split('.').last;
+      final fileName = 'cert_${workOrderId}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      
+      // Upload to breakdown-media bucket (or a dedicated certificates bucket if it exists)
+      await _client.storage.from('breakdown-media').upload(fileName, file);
+      final url = _client.storage.from('breakdown-media').getPublicUrl(fileName);
+      
+      // Update the work_order with the URL
+      await _client.from('work_orders').update({
+        'path_sammanay_cert_url': url,
+      }).eq('id', workOrderId);
+      
+      return url;
+    } catch (e) {
+      debugPrint('Certificate upload error: $e');
+      throw Exception('Failed to upload certificate');
+    }
+  }
+
   // ── UUID validator ────────────────────────────────────────────────────────
   // Re-corrected standard UUID regex
   static final _strictUuidRegex = RegExp(

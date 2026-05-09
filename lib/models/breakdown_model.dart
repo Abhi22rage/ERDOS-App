@@ -22,6 +22,7 @@ class BreakdownModel {
   final List<ApprovalModel> approvals;
   final List<String> mediaUrls;
   final List<RepairMediaModel> repairMedia;
+  final Map<String, dynamic>? workOrder;
 
   BreakdownModel({
     required this.id,
@@ -47,6 +48,7 @@ class BreakdownModel {
     this.approvals = const [],
     this.mediaUrls = const [],
     this.repairMedia = const [],
+    this.workOrder,
   });
 
   factory BreakdownModel.fromJson(Map<String, dynamic> json) {
@@ -88,6 +90,7 @@ class BreakdownModel {
               ?.map((m) => RepairMediaModel.fromJson(m))
               .toList() ??
           [],
+      workOrder: (json['work_orders'] as List<dynamic>?)?.firstOrNull as Map<String, dynamic>? ?? json['work_order'],
     );
   }
 

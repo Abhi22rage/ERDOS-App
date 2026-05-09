@@ -56,7 +56,9 @@ class UserModel {
       state: json['state'],
       district: json['district'],
       country: json['country'],
-      postalCode: json['postal_code'] is int ? json['postal_code'] : int.tryParse(json['postal_code']?.toString() ?? ''),
+      postalCode: json['postal_code'] is int
+          ? json['postal_code']
+          : int.tryParse(json['postal_code']?.toString() ?? ''),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
           : null,
@@ -64,7 +66,7 @@ class UserModel {
     );
   }
 
-      Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'email': email,
@@ -131,7 +133,6 @@ class UserModel {
   String get roleDisplay {
     const roleMap = {
       'khalasi': 'Khalasi',
-      'jalmitra': 'Jalmitra',
       'je': 'Junior Engineer',
       'ae': 'Assistant Engineer',
       'aee': 'Asst. Executive Engineer',
@@ -159,13 +160,11 @@ class UserModel {
 
   bool get canReport => [
         'khalasi',
-        'jalmitra',
         'je',
         'ae',
         'aee',
         'ee',
         'se',
-        'admin',
       ].contains(role);
 
   String get initials {
